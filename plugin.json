@@ -1,20 +1,21 @@
 {
-	"id": "acode.plugin.ai-agent",
+	"$schema": "https://acode.app/schema/plugin/v0.1.0.json",
+	"id": "hallofcodes.plugin.ai-agent",
 	"name": "AI Agent",
 	"main": "dist/main.js",
 	"version": "0.0.1",
 	"readme": "./readme.md",
-	"theme": "./src/theme/style.css",
+	"theme": "",
 	"themeType": "editor",
 	"icon": "icon.png",
 	"files": [],
+	"permissions": [],
 	"license": "MIT",
 	"minVersionCode": 290,
 	"price": 0,
 	"author": {
 		"name": "dconco",
 		"github": "dconco",
-		"email": "concodave@gmail.com",
-		"url": "https://dconco.github.io"
+		"email": "concodave@gmail.com"
 	}
 }

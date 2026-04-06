@@ -10,6 +10,10 @@ module.exports = (env, options) => {
       use: 'ts-loader',
       exclude: /node_modules|dist|typings/,
     },
+    {
+        test: /\.svg$/i,
+        type: 'asset/inline', // This converts the SVG to a base64 Data URI automatically
+      },
   ];
 
   const main = {
