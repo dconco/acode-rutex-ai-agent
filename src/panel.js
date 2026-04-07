@@ -84,12 +84,11 @@ const renderPanel = container => {
 	}
 	inputEl.addEventListener('input', syncInputState)
 	inputEl.addEventListener('change', syncInputState)
-	inputEl.addEventListener('keyup', syncInputState)
 	inputEl.addEventListener('keydown', maybeSendFromEnter)
 	inputEl.addEventListener('beforeinput', e => {
 		if (
 			e.inputType === 'insertLineBreak' &&
-			!e.shiftKey &&
+			!e.getModifierState?.('Shift') &&
 			!e.isComposing
 		) {
 			e.preventDefault()
