@@ -1,21 +1,28 @@
 {
 	"$schema": "https://acode.app/schema/plugin/v0.1.0.json",
-	"id": "hallofcodes.plugin.ai-agent",
-	"name": "AI Agent",
+	"id": "hallofcodes.rutex.ai-agent",
+	"name": "Rutex AI Agent",
 	"main": "dist/main.js",
 	"version": "0.0.1",
 	"readme": "./readme.md",
 	"theme": "",
 	"themeType": "editor",
-	"icon": "icon.png",
+	"icon": "icon.svg",
 	"files": [],
 	"permissions": [],
 	"license": "MIT",
 	"minVersionCode": 290,
 	"price": 0,
-	"author": {
-		"name": "dconco",
-		"github": "dconco",
-		"email": "concodave@gmail.com"
-	}
+	"author": [
+	   {
+   		"name": "dconco",
+   		"github": "dconco",
+   		"email": "concodave@gmail.com"
+	   },
+	   {
+   		"name": "Olla Tech",
+   		"github": "olla-tech",
+   		"email": "olla-tech@gmail.com"
+	   }
+   ]
 }

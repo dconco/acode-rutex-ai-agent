@@ -1,4 +1,5 @@
-import { addIcon, removeIcon } from './addIcon'
+import { addIcon, removeIcon } from './sidebar'
+import { PLUGIN_ID } from './configs/constants'
 
 class MainPlugin {
 	async init() {
@@ -14,7 +15,7 @@ if (window.acode) {
 	const myPlugin = new MainPlugin()
 
 	acode.setPluginInit(
-		'hallofcodes.plugin.ai-agent',
+		PLUGIN_ID,
 		async (
 			baseUrl: string,
 			$page: HTMLElement,
@@ -30,7 +31,7 @@ if (window.acode) {
 		}
 	)
 
-	acode.setPluginUnmount('hallofcodes.plugin.ai-agent', () => {
+	acode.setPluginUnmount(PLUGIN_ID, () => {
 		myPlugin.destroy()
 	})
 }

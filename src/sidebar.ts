@@ -1,4 +1,6 @@
 import Icon from './icons/icon.svg'
+import { renderPanel } from './panel'
+import { PLUGIN_ID } from './configs/constants'
 
 const sideBarApps = acode.require('sidebarApps')
 
@@ -7,11 +9,9 @@ const addIcon = () => {
 
 	sideBarApps.add(
 		'ai-agent-icon',
-		'hallofcodes.plugin.ai-agent',
-		'AI Agent',
-		(container: HTMLElement) => {
-			container.innerHTML = '<h1>AI Agent Sidebar</h1>'
-		},
+		PLUGIN_ID,
+		'Rutex AI Agent',
+		(container: HTMLElement) => renderPanel(container),
 		false,
 		() => {
 			// Optional: logic to run whenever the sidebar is toggled open
@@ -20,7 +20,7 @@ const addIcon = () => {
 }
 
 const removeIcon = () => {
-	sideBarApps.remove('hallofcodes.plugin.ai-agent')
+	sideBarApps.remove(PLUGIN_ID)
 }
 
 export { addIcon, removeIcon }
