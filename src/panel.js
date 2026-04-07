@@ -76,23 +76,36 @@ const renderPanel = container => {
 		resize()
 		updateCount()
 	}
+	let skipNextBeforeInputEnter = false
+	const triggerSendAction = () => (isStreaming ? stopStream() : handleSend())
 	const maybeSendFromEnter = e => {
 		if (e.key === 'Enter' && !e.shiftKey) {
 			e.preventDefault()
-			isStreaming ? stopStream() : handleSend()
+			// keydown often fires before beforeinput; skip the paired beforeinput.
+			skipNextBeforeInputEnter = true
+			setTimeout(() => {
+				skipNextBeforeInputEnter = false
+			}, 0)
+			triggerSendAction()
 		}
 	}
 	inputEl.addEventListener('input', syncInputState)
-	inputEl.addEventListener('change', syncInputState)
 	inputEl.addEventListener('keydown', maybeSendFromEnter)
 	inputEl.addEventListener('beforeinput', e => {
+		const isShiftPressed = e.getModifierState
+			? e.getModifierState('Shift')
+			: false
 		if (
 			e.inputType === 'insertLineBreak' &&
-			!e.getModifierState?.('Shift') &&
+			!isShiftPressed &&
 			!e.isComposing
 		) {
 			e.preventDefault()
-			isStreaming ? stopStream() : handleSend()
+			if (skipNextBeforeInputEnter) {
+				skipNextBeforeInputEnter = false
+				return
+			}
+			triggerSendAction()
 		}
 	})
 
