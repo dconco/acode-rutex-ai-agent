@@ -32,25 +32,25 @@ const renderPanel = container => {
 	/* ── Random AI Responses ───────────────────────── */
 	const randomResponses = [
 		"I understand you're working on that. Here's what I think would help:\n\n```javascript\n// Example solution\nfunction solveProblem(input) {\n  return input.map(item => item * 2);\n}\n```\n\nThis should handle your use case efficiently.",
-		
-		"Great question! Based on your context, I'd suggest looking at it this way:\n\n```python\ndef process_data(data):\n    \"\"\"Process the incoming data structure\"\"\"\n    result = {}\n    for key, value in data.items():\n        result[key.upper()] = value\n    return result\n```\n\nLet me know if you need clarification on any part.",
-		
-		"I see what you're trying to accomplish. Here's a practical approach:\n\n```bash\n# Here's a command that might help\ngrep -r \"pattern\" --include=\"*.js\" .\n```\n\nThis will search through all your JavaScript files for the pattern you need.",
-		
-		"Let me break this down for you. The key insight is to think about data flow:\n\n```typescript\ninterface DataStructure {\n  id: string;\n  value: number;\n  metadata: Record<string, unknown>;\n}\n\nfunction transform(item: DataStructure): DataStructure {\n  return {\n    ...item,\n    value: item.value * 2\n  };\n}\n```\n\nDoes this align with what you had in mind?",
-		
+
+		'Great question! Based on your context, I\'d suggest looking at it this way:\n\n```python\ndef process_data(data):\n    """Process the incoming data structure"""\n    result = {}\n    for key, value in data.items():\n        result[key.upper()] = value\n    return result\n```\n\nLet me know if you need clarification on any part.',
+
+		'I see what you\'re trying to accomplish. Here\'s a practical approach:\n\n```bash\n# Here\'s a command that might help\ngrep -r "pattern" --include="*.js" .\n```\n\nThis will search through all your JavaScript files for the pattern you need.',
+
+		'Let me break this down for you. The key insight is to think about data flow:\n\n```typescript\ninterface DataStructure {\n  id: string;\n  value: number;\n  metadata: Record<string, unknown>;\n}\n\nfunction transform(item: DataStructure): DataStructure {\n  return {\n    ...item,\n    value: item.value * 2\n  };\n}\n```\n\nDoes this align with what you had in mind?',
+
 		"Interesting challenge! Here's how I would approach it:\n\n```javascript\n// Event-driven solution\nclass EventHandler {\n  constructor() {\n    this.events = {};\n  }\n  \n  on(event, callback) {\n    if (!this.events[event]) this.events[event] = [];\n    this.events[event].push(callback);\n  }\n  \n  emit(event, data) {\n    (this.events[event] || []).forEach(cb => cb(data));\n  }\n}\n```\n\nThis pattern should give you the flexibility you need.",
-		
+
 		"Based on what you're asking, consider this refactoring:\n\n```python\ndef optimized_function(items):\n    # Using list comprehension for better performance\n    return [item for item in items if item.is_valid()]\n```\n\nThis is more Pythonic and efficient than using traditional loops.",
-		
+
 		"I think you'll find this pattern useful:\n\n```javascript\n// Memoization for expensive operations\nconst memoize = (fn) => {\n  const cache = new Map();\n  return (...args) => {\n    const key = JSON.stringify(args);\n    if (cache.has(key)) return cache.get(key);\n    const result = fn(...args);\n    cache.set(key, result);\n    return result;\n  };\n};\n```\n\nThis will cache results and improve performance significantly.",
-		
+
 		"Here's a different perspective on your problem:\n\n```sql\n-- Query to get the data you need\nSELECT \n  u.name,\n  COUNT(o.id) as order_count,\n  SUM(o.total) as total_spent\nFROM users u\nLEFT JOIN orders o ON u.id = o.user_id\nGROUP BY u.id\nHAVING total_spent > 1000;\n```\n\nThis should give you the aggregated insights you're looking for.",
-		
+
 		"Let me show you a clean way to implement that:\n\n```javascript\n// Async error handling wrapper\nconst asyncHandler = (fn) => (req, res, next) => {\n  Promise.resolve(fn(req, res, next)).catch(next);\n};\n\n// Usage\napp.get('/data', asyncHandler(async (req, res) => {\n  const data = await fetchData();\n  res.json(data);\n}));\n```\n\nThis eliminates try-catch boilerplate throughout your codebase.",
-		
+
 		"I appreciate your question. Here's the solution I'd recommend:\n\n```rust\nfn process_vector(vec: Vec<i32>) -> Vec<i32> {\n    vec.into_iter()\n        .filter(|&x| x > 0)\n        .map(|x| x * 2)\n        .collect()\n}\n```\n\nRust's iterator system makes this very efficient and safe."
-	];
+	]
 
 	/* ── Suggestions ──────────────────────────────── */
 	container.querySelectorAll('.sug-chip').forEach(chip => {
@@ -310,23 +310,23 @@ const renderPanel = container => {
 		// Pick a random response
 		const randomIndex = Math.floor(Math.random() * randomResponses.length)
 		let fullResponse = randomResponses[randomIndex]
-		
+
 		// Add context awareness if files are attached
 		if (ctxName && ctxFiles.length > 0) {
-			fullResponse = `**Context loaded:** ${ctxName}\n\n` + fullResponse;
+			fullResponse = `**Context loaded:** ${ctxName}\n\n` + fullResponse
 		}
-		
+
 		let aiText = ''
 		let aiIdx = null
 		let liveRow = null
 		let liveContent = null
 		let chunkIndex = 0
-		
+
 		// Split response into chunks for streaming effect
 		const chunks = []
 		const words = fullResponse.split(/(\s+)/)
 		let currentChunk = ''
-		
+
 		for (let i = 0; i < words.length; i++) {
 			currentChunk += words[i]
 			if (currentChunk.length >= 5 || i === words.length - 1) {
@@ -334,7 +334,7 @@ const renderPanel = container => {
 				currentChunk = ''
 			}
 		}
-		
+
 		function sendChunk() {
 			if (chunkIndex < chunks.length) {
 				if (aiIdx === null) {
@@ -352,7 +352,7 @@ const renderPanel = container => {
 					msgsInner.appendChild(liveRow)
 					liveContent = liveRow.querySelector('#live-ai-content')
 				}
-				
+
 				aiText += chunks[chunkIndex]
 				messages[aiIdx].text = aiText
 				if (liveContent) {
@@ -367,7 +367,7 @@ const renderPanel = container => {
 				endStream()
 			}
 		}
-		
+
 		streamTimeout = setTimeout(sendChunk, 100)
 	}
 
@@ -375,18 +375,18 @@ const renderPanel = container => {
 	function handleSend() {
 		const text = inputEl.value.trim()
 		if (!text) return
-		
+
 		const ctxName = ctxFiles.length
 			? ctxFiles.map(f => f.name).join(', ')
 			: null
-			
+
 		inputEl.value = ''
 		inputEl.style.height = 'auto'
 		updateCount()
-		
+
 		messages.push({ role: 'user', text, ctxName })
 		renderAll()
-		
+
 		simulateAIResponse(text, ctxName)
 	}
 
@@ -500,8 +500,8 @@ const renderPanel = container => {
 				btn.classList.remove('copied')
 			}, 1800)
 		}
-		if (navigator.clipboard) navigator.clipboard.writeText(text).then(done)
-		else {
+
+		const alternativeCopy = () => {
 			const ta = Object.assign(createEl('textarea'), {
 				value: text
 			})
@@ -512,6 +512,10 @@ const renderPanel = container => {
 			ta.remove()
 			done()
 		}
+
+		if (navigator.clipboard)
+			navigator.clipboard.writeText(text).then(done).catch(alternativeCopy)
+		else alternativeCopy()
 	}
 
 	/* ── Helpers ──────────────────────────────────── */
