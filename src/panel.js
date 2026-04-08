@@ -78,8 +78,8 @@ const renderPanel = container => {
 	})
 
 	/* ── Textarea ─────────────────────────────────── */
-	function resize(reset) {
-		if (inputEl.scrollHeight < 40 || reset) {
+	function resize() {
+		if (inputEl.scrollHeight < 40 || inputEl.value == '') {
 			inputEl.style.minHeight = '40px'
 			return
 		}
@@ -425,7 +425,7 @@ const renderPanel = container => {
 
 		inputEl.value = ''
 
-		resize(true)
+		resize()
 		updateCount()
 
 		messages.push({ role: 'user', text, ctxName })
