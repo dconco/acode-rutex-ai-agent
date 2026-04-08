@@ -130,10 +130,13 @@ triggerSendAction()
 
 inputEl.addEventListener('input', syncInputState)
 inputEl.addEventListener('keydown', maybeSendFromEnter)
-inputEl.addEventListener('beforeinput', event => {
-const isShiftPressed = event.getModifierState
-? event.getModifierState('Shift')
-: false
+	inputEl.addEventListener('beforeinput', event => {
+		const beforeInputEvent = event as InputEvent & {
+			getModifierState?: (keyArg: string) => boolean
+		}
+		const isShiftPressed = beforeInputEvent.getModifierState
+			? beforeInputEvent.getModifierState('Shift')
+			: false
 if (
 event.inputType === 'insertLineBreak' &&
 isShiftPressed &&
@@ -165,15 +168,14 @@ attachBtn.onclick = event => openContextMenu(event.currentTarget as HTMLElement)
 selBtn.onclick = () => {
 container.dispatchEvent(
 new CustomEvent('ai-panel-get-selection', {
-detail: {
-onSelection: (text: string) => {
-if (!text) return
-inputEl.value += `\n\
-\`\`\`\n${text}\n\`\`\`\n`
-resize()
-updateCount()
-inputEl.focus()
-}
+				detail: {
+					onSelection: (text: string) => {
+						if (!text) return
+						inputEl.value += `\n\`\`\`\n${text}\n\`\`\`\n`
+						resize()
+						updateCount()
+						inputEl.focus()
+					}
 }
 })
 )
@@ -246,10 +248,8 @@ collection.forEach(file => pushCandidate(file))
 
 pushCandidate(editorManager?.activeFile)
 pushCandidate(editorManager?.activeFile?.file)
-pushCandidate(editorManager?.activeFile?.session)
-
-return candidates
-}
+		return candidates
+	}
 
 function addContextFile(file: ContextFile): void {
 if (!file.name) return
