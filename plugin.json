@@ -14,15 +14,15 @@
 	"minVersionCode": 290,
 	"price": 0,
 	"author": [
-	   {
-   		"name": "dconco",
-   		"github": "dconco",
-   		"email": "concodave@gmail.com"
-	   },
-	   {
-   		"name": "Olla Tech",
-   		"github": "olla-tech",
-   		"email": "olla-tech@gmail.com"
-	   }
-   ]
+		{
+			"name": "dconco",
+			"github": "dconco",
+			"email": "concodave@gmail.com"
+		},
+		{
+			"name": "Olla Tech",
+			"github": "olla-tech",
+			"email": "olla-tech@gmail.com"
+		}
+	]
 }

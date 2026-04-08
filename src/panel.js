@@ -6,6 +6,11 @@ const renderPanel = container => {
 	const doc = container.ownerDocument || document
 	const createEl = tag => doc.createElement(tag)
 
+	container.style.display = 'flex'
+	container.style.flexDirection = 'column'
+	container.style.height = '100%'
+	container.style.width = '100%'
+
 	/* ── Refs ─────────────────────────────────────── */
 	const msgsInner = container.querySelector('#msgs-inner')
 	const msgsWrap = container.querySelector('#msgs-wrap')
@@ -22,6 +27,16 @@ const renderPanel = container => {
 	const attachBtn = container.querySelector('#attach-btn')
 	const selBtn = container.querySelector('#sel-btn')
 	const clearBtn = container.querySelector('#clear-btn')
+
+	const scrollableElements = container.querySelectorAll(
+		'#ai-panel, #msgs-wrap'
+	)
+
+	scrollableElements.forEach(el => {
+		// Prevent scroll events from bubbling up to Acode's main UI
+		el.onwheel = e => e.stopPropagation()
+		el.ontouchmove = e => e.stopPropagation()
+	})
 
 	/* ── State ────────────────────────────────────── */
 	let messages = [] // { role:'user'|'ai', text, ctxName? }
@@ -63,23 +78,50 @@ const renderPanel = container => {
 	})
 
 	/* ── Textarea ─────────────────────────────────── */
-	function resize() {
-		inputEl.style.height = 'auto'
-		inputEl.style.height = Math.min(inputEl.scrollHeight, 120) + 'px'
+	function resize(reset) {
+		if (inputEl.scrollHeight < 40 || reset) {
+			inputEl.style.minHeight = '40px'
+			return
+		}
+		inputEl.style.minHeight = Math.min(inputEl.scrollHeight, 130) + 'px'
 	}
+
 	function updateCount() {
 		const n = inputEl.value.length
 		charCount.textContent = n || '0'
 		charCount.classList.toggle('warn', n > 2000)
 	}
+
+	// --- Restore Draft ---
+	const draftMessage = localStorage.getItem('draft-message')
+	if (draftMessage) inputEl.value = draftMessage
+
+	resize()
+	updateCount()
+
+	// --- Save message draft ---
+	let debounceTimer
+
 	const syncInputState = () => {
 		resize()
 		updateCount()
+
+		if (inputEl.value.trim() == '')
+			return void localStorage.removeItem('draft-message')
+
+		if (debounceTimer != undefined) clearTimeout(debounceTimer)
+
+		debounceTimer = setTimeout(() => {
+			localStorage.setItem('draft-message', inputEl.value.trim())
+			debounceTimer = undefined
+		}, 500)
 	}
+
 	let skipNextBeforeInputEnter = false
 	const triggerSendAction = () => (isStreaming ? stopStream() : handleSend())
+
 	const maybeSendFromEnter = e => {
-		if (e.key === 'Enter' && !e.shiftKey) {
+		if (e.key === 'Enter' && e.shiftKey) {
 			e.preventDefault()
 			// keydown often fires before beforeinput; skip the paired beforeinput.
 			skipNextBeforeInputEnter = true
@@ -89,6 +131,7 @@ const renderPanel = container => {
 			triggerSendAction()
 		}
 	}
+
 	inputEl.addEventListener('input', syncInputState)
 	inputEl.addEventListener('keydown', maybeSendFromEnter)
 	inputEl.addEventListener('beforeinput', e => {
@@ -97,7 +140,7 @@ const renderPanel = container => {
 			: false
 		if (
 			e.inputType === 'insertLineBreak' &&
-			!isShiftPressed &&
+			isShiftPressed &&
 			!e.isComposing
 		) {
 			e.preventDefault()
@@ -221,8 +264,6 @@ const renderPanel = container => {
 				inputEl.value = msg.text
 				messages.splice(idx)
 				renderAll()
-				resize()
-				updateCount()
 				inputEl.focus()
 			})
 		} else {
@@ -278,6 +319,8 @@ const renderPanel = container => {
 		endStream()
 	}
 	function endStream() {
+		localStorage.removeItem('draft-message')
+
 		isStreaming = false
 		sendIcon.style.display = ''
 		stopIcon.style.display = 'none'
@@ -381,7 +424,8 @@ const renderPanel = container => {
 			: null
 
 		inputEl.value = ''
-		inputEl.style.height = 'auto'
+
+		resize(true)
 		updateCount()
 
 		messages.push({ role: 'user', text, ctxName })
@@ -404,9 +448,6 @@ const renderPanel = container => {
        <div class="code-actions">
          <button class="code-btn copy-code-btn" data-enc="${enc}">
            <svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>copy
-         </button>
-         <button class="code-btn insert-code-btn" data-enc="${enc}">
-           <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>insert
          </button>
        </div>
      </div>
@@ -520,11 +561,10 @@ const renderPanel = container => {
 
 	/* ── Helpers ──────────────────────────────────── */
 	function esc(s) {
-		return String(s)
-			.replace(/&/g, '&amp;')
-			.replace(/</g, '&lt;')
-			.replace(/>/g, '&gt;')
-			.replace(/"/g, '&quot;')
+		const span = doc.createElement('span')
+		span.textContent = s
+
+		return span.innerHTML
 	}
 	function decode(enc) {
 		try {
