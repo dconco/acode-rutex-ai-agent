@@ -5,24 +5,24 @@
 	"main": "dist/main.js",
 	"version": "0.0.1",
 	"readme": "./readme.md",
+	"repository": "https://github.com/hallofcodes/acode-ai-agent-plugin",
 	"theme": "",
 	"themeType": "editor",
 	"icon": "icon.svg",
 	"files": [],
 	"permissions": [],
 	"license": "MIT",
-	"minVersionCode": 290,
+	"minVersionCode": 967,
 	"price": 0,
-	"author": [
+	"author": {
+		"name": "dconco",
+		"github": "dconco"
+	},
+	"contributors": [
 		{
-			"name": "dconco",
-			"github": "dconco",
-			"email": "concodave@gmail.com"
-		},
-		{
-			"name": "Olla Tech",
-			"github": "olla-tech",
-			"email": "olla-tech@gmail.com"
+			"name": "Dev Olly",
+			"role": "contributor",
+			"github": "olly-techie"
 		}
 	]
 }
