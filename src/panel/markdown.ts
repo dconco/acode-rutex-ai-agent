@@ -61,20 +61,22 @@ export const renderMarkdown = (
 	return h
 }
 
-export type EditedFileLines = Record<number, [string, boolean]>
+export type EditedFileLines = Array<[number, string, boolean]>
 
 export const renderEditedFileLines = (
 	lines: EditedFileLines,
-	escapeHtml: (value: string) => string
+	escapeHtml: (value: string) => string,
+	editedFilePath = ''
 ): string => {
-	const entries = Object.entries(lines)
-		.map(([lineNumber, value]) => ({
+	const entries = lines
+		.map(([lineNumber, text, isAdded], index) => ({
 			lineNumber: Number(lineNumber),
-			text: value?.[0] ?? '',
-			isAdded: Boolean(value?.[1])
+			text: text ?? '',
+			isAdded: Boolean(isAdded),
+			index
 		}))
 		.filter(entry => Number.isInteger(entry.lineNumber) && entry.lineNumber > 0)
-		.sort((a, b) => a.lineNumber - b.lineNumber)
+		.sort((a, b) => a.lineNumber - b.lineNumber || a.index - b.index)
 
 	const rows = entries
 		.map(entry =>
@@ -90,7 +92,7 @@ export const renderEditedFileLines = (
 
 	return [
 		'<div class="code-block edited-lines-block">',
-		'<div class="code-header"><span class="code-lang">edited lines</span></div>',
+		`<div class="code-header"><span class="code-lang"><b>Edit:</b> ${escapeHtml(editedFilePath || 'edited lines')}</span></div>`,
 		`<div class="code-body edited-lines-body">${rows}</div>`,
 		'</div>'
 	].join('')
