@@ -808,6 +808,52 @@
 		background: var(--text-dim);
 		border-radius: 2px;
 	}
+	.edited-lines-body {
+		padding: 0;
+		overflow-x: auto;
+		white-space: normal;
+	}
+	.edited-line {
+		display: grid;
+		grid-template-columns: 36px 10px minmax(0, 1fr);
+		gap: 6px;
+		align-items: start;
+		padding: 4px 8px;
+		border-bottom: 1px solid var(--border);
+	}
+	.edited-line:last-child {
+		border-bottom: none;
+	}
+	.edited-line-number,
+	.edited-line-prefix,
+	.edited-line-text {
+		font-family: var(--mono);
+		font-size: 11px;
+		line-height: 1.55;
+	}
+	.edited-line-number {
+		color: var(--text-dim);
+		text-align: right;
+	}
+	.edited-line-prefix {
+		font-weight: 700;
+	}
+	.edited-line-text {
+		white-space: pre;
+		color: var(--text-muted);
+	}
+	.edited-line.added {
+		background: color-mix(in srgb, var(--success) 16%, transparent);
+	}
+	.edited-line.removed {
+		background: color-mix(in srgb, var(--danger) 16%, transparent);
+	}
+	.edited-line.added .edited-line-prefix {
+		color: var(--success);
+	}
+	.edited-line.removed .edited-line-prefix {
+		color: var(--danger);
+	}
 
 	/* ── Message Actions ──────────────────────────── */
 	.msg-actions {

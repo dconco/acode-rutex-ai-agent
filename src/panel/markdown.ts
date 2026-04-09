@@ -60,3 +60,36 @@ export const renderMarkdown = (
 
 	return h
 }
+
+export type EditedFileLines = Record<number, [string, boolean]>
+
+export const renderEditedFileLines = (
+	lines: EditedFileLines,
+	escapeHtml: (value: string) => string
+): string => {
+	const entries = Object.entries(lines)
+		.map(([lineNumber, value]) => ({
+			lineNumber: Number(lineNumber),
+			text: value?.[0] ?? '',
+			isAdded: Boolean(value?.[1])
+		}))
+		.filter(entry => Number.isFinite(entry.lineNumber))
+		.sort((a, b) => a.lineNumber - b.lineNumber)
+
+	const rows = entries
+		.map(
+			entry => `<div class="edited-line ${entry.isAdded ? 'added' : 'removed'}">
+      <span class="edited-line-number">${escapeHtml(String(entry.lineNumber))}</span>
+      <span class="edited-line-prefix">${entry.isAdded ? '+' : '-'}</span>
+      <span class="edited-line-text">${escapeHtml(entry.text)}</span>
+    </div>`
+		)
+		.join('')
+
+	return `<div class="code-block edited-lines-block">
+    <div class="code-header">
+      <span class="code-lang">edited lines</span>
+    </div>
+    <div class="code-body edited-lines-body">${rows}</div>
+  </div>`
+}
