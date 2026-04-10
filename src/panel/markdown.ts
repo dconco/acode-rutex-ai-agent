@@ -60,3 +60,40 @@ export const renderMarkdown = (
 
 	return h
 }
+
+export type EditedFileLines = Array<[number, string, boolean]>
+
+export const renderEditedFileLines = (
+	lines: EditedFileLines,
+	escapeHtml: (value: string) => string,
+	editedFilePath = ''
+): string => {
+	const entries = lines
+		.map(([lineNumber, text, isAdded], index) => ({
+			lineNumber: Number(lineNumber),
+			text: text ?? '',
+			isAdded: Boolean(isAdded),
+			index
+		}))
+		.filter(entry => Number.isInteger(entry.lineNumber) && entry.lineNumber > 0)
+		.sort((a, b) => a.lineNumber - b.lineNumber || a.index - b.index)
+
+	const rows = entries
+		.map(entry =>
+			[
+				`<div class="edited-line ${entry.isAdded ? 'added' : 'removed'}">`,
+				`<span class="edited-line-number">${escapeHtml(String(entry.lineNumber))}</span>`,
+				`<span class="edited-line-prefix">${entry.isAdded ? '+' : '-'}</span>`,
+				`<span class="edited-line-text">${escapeHtml(entry.text)}</span>`,
+				'</div>'
+			].join('')
+		)
+		.join('')
+
+	return [
+		'<div class="code-block edited-lines-block">',
+		`<div class="code-header"><span class="code-lang"><b>Edit:</b> ${escapeHtml(editedFilePath || 'edited lines')}</span></div>`,
+		`<div class="code-body edited-lines-body">${rows}</div>`,
+		'</div>'
+	].join('')
+}
