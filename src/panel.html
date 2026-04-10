@@ -794,6 +794,10 @@
 		stroke-linecap: round;
 		stroke-linejoin: round;
 	}
+	.code-body:not(.edited-lines-body) {
+		user-select: text;
+		-webkit-user-select: text;
+	}
 	.code-body {
 		padding: 8px;
 		overflow-x: auto;
@@ -844,6 +848,8 @@
 	}
 	.edited-line-text {
 		white-space: pre;
+		user-select: text;
+		-webkit-user-select: text;
 		color: var(--text-muted);
 	}
 	.edited-line.added {
