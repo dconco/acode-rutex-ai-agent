@@ -1,6 +1,6 @@
 import panel from './panel.html'
 import { RANDOM_RESPONSES } from './configs/constants'
-import { renderMarkdown } from './panel/markdown'
+import { renderMarkdown, renderEditedFileLines, EditedFileLines } from './panel/markdown'
 import type {
 	AIPanelAPI,
 	ChatMessage,
@@ -401,26 +401,37 @@ const renderPanel = (container: HTMLElement): void => {
 				inputEl.focus()
 			})
 		} else {
+			const editedFiles: EditedFileLines = [
+				{ line: 1, text: '<html>', isAdded: false },
+				{ line: 1, text: '<?php', isAdded: true },
+				{ line: 2, text: 'echo "Hello";', isAdded: true },
+				{ line: 3, text: '<div class="msg-actions">', isAdded: false },
+				{ line: 4, text: '<span class="msg-name">Rutex AI Agent</span>', isAdded: false },
+			]
+
 			row.innerHTML = `
-     <div class="msg-meta">
-       <div class="msg-avatar ai-av"><svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg></div>
-       <span class="msg-name">Rutex AI Agent</span>
-     </div>
-     <div class="ai-content">${renderMarkdown(msg.text, esc)}</div>
-     <div class="msg-actions">
-       <button class="act-btn copy-btn" title="Copy">
-         <svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> copy
-       </button>
-       <button class="act-btn regen-btn" title="Retry">
-         <svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.5 15a9 9 0 1 1-2.7-6.7L23 10"/></svg> retry
-       </button>
-       <button class="act-btn thumbup-btn" title="Good">
-         <svg viewBox="0 0 24 24"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z"/><path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>
-       </button>
-       <button class="act-btn thumbdn-btn" title="Bad">
-         <svg viewBox="0 0 24 24"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3H10z"/><path d="M17 2h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"/></svg>
-       </button>
-     </div>`
+				<div class="msg-meta">
+					<div class="msg-avatar ai-av"><svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg></div>
+					<span class="msg-name">Rutex AI Agent</span>
+				</div>
+				<div class="ai-content">
+					${renderMarkdown(msg.text, esc)}
+					${renderEditedFileLines(editedFiles, esc, 'index.php')}
+				</div>
+				<div class="msg-actions">
+					<button class="act-btn copy-btn" title="Copy">
+						<svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> copy
+					</button>
+					<button class="act-btn regen-btn" title="Retry">
+						<svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.5 15a9 9 0 1 1-2.7-6.7L23 10"/></svg> retry
+					</button>
+					<button class="act-btn thumbup-btn" title="Good">
+						<svg viewBox="0 0 24 24"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z"/><path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>
+					</button>
+					<button class="act-btn thumbdn-btn" title="Bad">
+						<svg viewBox="0 0 24 24"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3H10z"/><path d="M17 2h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"/></svg>
+					</button>
+				</div>`
 
 			const aiContent = row.querySelector<HTMLElement>('.ai-content')
 			const copyBtn = row.querySelector<HTMLButtonElement>('.copy-btn')

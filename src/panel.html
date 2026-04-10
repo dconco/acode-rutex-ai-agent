@@ -740,17 +740,17 @@
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
-		padding: 0;
-		padding-block: 5px;
-		margin-top: -20px;
+		padding: 5px 8px;
 		background: var(--bg-hover);
 		border-bottom: 1px solid var(--border);
 		border-radius: 7px 7px 0 0;
 	}
+	.code-lang:not(.edited) {
+		text-transform: uppercase;
+	}
 	.code-lang {
 		font-size: 9.5px;
 		font-family: var(--mono);
-		text-transform: uppercase;
 		letter-spacing: 0.1em;
 		color: var(--text-dim);
 	}
@@ -810,19 +810,17 @@
 	}
 	.edited-lines-body {
 		padding: 0;
+		tab-size: 0;
 		overflow-x: auto;
 		white-space: normal;
 	}
 	.edited-line {
 		display: grid;
 		grid-template-columns: 30px 10px minmax(0, 1fr);
-		gap: 6px;
+		gap: 4px;
 		align-items: start;
+		margin-left: -20px;
 		padding: 4px 6px 4px 4px;
-		border-bottom: 1px solid var(--border);
-	}
-	.edited-line:last-child {
-		border-bottom: none;
 	}
 	.edited-line-number,
 	.edited-line-prefix,

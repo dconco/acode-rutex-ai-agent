@@ -1,9 +1,9 @@
 const { networkInterfaces } = require('os')
 
 module.exports = async (mode = 'dev') => {
-	const ip = '192.168.43.137'
+	const ip = '192.168.43.136'
 	const port = '5500'
-	const src = `http://${ip || '10.0.0'}:${port}`
+	const src = `https://${ip || '10.0.0'}:${port}`
 	console.log('Server starting at: ', src)
 	return { ip, port }
 }

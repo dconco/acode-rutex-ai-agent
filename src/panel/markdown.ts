@@ -8,14 +8,14 @@ export const renderMarkdown = (
 		const language = lang || 'code'
 		const encoded = btoa(unescape(encodeURIComponent(code.trimEnd())))
 		return `<div class="code-block">
-      <div class="code-header">
-         <span class="code-lang">${escapeHtml(language)}</span>
-         <button class="code-btn copy-code-btn" data-enc="${encoded}">
-            <svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>copy
-         </button>
-      </div>
-      <div class="code-body">${escapeHtml(code.trimEnd())}</div>
-   </div>`
+			<div class="code-header">
+				<span class="code-lang">${escapeHtml(language)}</span>
+				<button class="code-btn copy-code-btn" data-enc="${encoded}">
+					<svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>copy
+				</button>
+			</div>
+			<div class="code-body">${escapeHtml(code.trimEnd())}</div>
+		</div>`
 	})
 
 	h = h.replace(/^### (.+)$/gm, '<h3>$1</h3>')
@@ -61,28 +61,24 @@ export const renderMarkdown = (
 	return h
 }
 
-export type EditedFileLines = Array<[number, string, boolean]>
+export type EditedFileLines = Array<{
+	line: number,
+	text: string,
+	isAdded: boolean
+}>
 
 export const renderEditedFileLines = (
 	lines: EditedFileLines,
 	escapeHtml: (value: string) => string,
 	editedFilePath = ''
 ): string => {
-	const entries = lines
-		.map(([lineNumber, text, isAdded], index) => ({
-			lineNumber: Number(lineNumber),
-			text: text ?? '',
-			isAdded: Boolean(isAdded),
-			index
-		}))
-		.filter(entry => Number.isInteger(entry.lineNumber) && entry.lineNumber > 0)
-		.sort((a, b) => a.lineNumber - b.lineNumber || a.index - b.index)
+	const entries = lines.sort((a, b) => a.line - b.line)
 
 	const rows = entries
 		.map(entry =>
 			[
 				`<div class="edited-line ${entry.isAdded ? 'added' : 'removed'}">`,
-				`<span class="edited-line-number">${escapeHtml(String(entry.lineNumber))}</span>`,
+				`<span class="edited-line-number">${escapeHtml(String(entry.line))}</span>`,
 				`<span class="edited-line-prefix">${entry.isAdded ? '+' : '-'}</span>`,
 				`<span class="edited-line-text">${escapeHtml(entry.text)}</span>`,
 				'</div>'
@@ -92,7 +88,7 @@ export const renderEditedFileLines = (
 
 	return [
 		'<div class="code-block edited-lines-block">',
-		`<div class="code-header"><span class="code-lang"><b>Edit:</b> ${escapeHtml(editedFilePath || 'edited lines')}</span></div>`,
+		`<div class="code-header"><span class="code-lang edited">EDIT: ${escapeHtml(editedFilePath || 'edited lines')}</span></div>`,
 		`<div class="code-body edited-lines-body">${rows}</div>`,
 		'</div>'
 	].join('')

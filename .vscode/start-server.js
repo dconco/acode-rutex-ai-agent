@@ -24,7 +24,6 @@ async function main() {
 		http: {
 			cert: fs.readFileSync(serverCrt),
 			key: fs.readFileSync(serverKey),
-			passphrase: '1234'
 		},
 		middleware: [
 			(req, res, next) => {
