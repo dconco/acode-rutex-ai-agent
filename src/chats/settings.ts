@@ -160,10 +160,12 @@ export const loadAiSettingsFromLocalStorage = (): void => {
 		if (models) aiSettings.models = models
 
 		const temperature = toFiniteNumber(parsed.temperature)
-		if (temperature !== null) aiSettings.temperature = Math.min(1, Math.max(0, temperature))
+		if (temperature !== null)
+			aiSettings.temperature = Math.min(1, Math.max(0, temperature))
 
 		const maxTokens = toFiniteNumber(parsed.maxTokens)
-		if (maxTokens !== null) aiSettings.maxTokens = Math.max(1, Math.round(maxTokens))
+		if (maxTokens !== null)
+			aiSettings.maxTokens = Math.max(1, Math.round(maxTokens))
 
 		if (typeof parsed.ollamaHost === 'string') {
 			aiSettings.ollamaHost = parsed.ollamaHost.trim()
@@ -177,7 +179,10 @@ export const loadAiSettingsFromLocalStorage = (): void => {
 
 		const lifetimeTokensUsed = toFiniteNumber(parsed.lifetimeTokensUsed)
 		if (lifetimeTokensUsed !== null) {
-			aiSettings.lifetimeTokensUsed = Math.max(0, Math.round(lifetimeTokensUsed))
+			aiSettings.lifetimeTokensUsed = Math.max(
+				0,
+				Math.round(lifetimeTokensUsed)
+			)
 		}
 	} catch {
 		// Ignore malformed settings data and keep defaults.
@@ -192,3 +197,6 @@ export const addLifetimeTokens = (usedTokens: number): void => {
 	)
 	saveAiSettingsToLocalStorage()
 }
+
+export const formatTokenNumber = (value: number): string =>
+	Math.max(0, Math.round(value)).toLocaleString()

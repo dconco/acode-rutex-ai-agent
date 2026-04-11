@@ -1,11 +1,5 @@
 import panel from './panel.html'
 import { RANDOM_RESPONSES } from './configs/constants'
-import {
-	addLifetimeTokens,
-	aiSettings,
-	loadAiSettingsFromLocalStorage,
-	saveAiSettingsToLocalStorage
-} from './chats/settings'
 import { Provider } from './chats/types'
 import {
 	renderMarkdown,
@@ -19,6 +13,12 @@ import {
 	getElement,
 	getFileNameFromPath
 } from './panel/utils'
+import { settingsContainer } from './panel/settingsContainer'
+import {
+	aiSettings,
+	formatTokenNumber,
+	addLifetimeTokens
+} from './chats/settings'
 
 declare global {
 	interface Window {
@@ -88,69 +88,15 @@ const renderPanel = (container: HTMLElement): void => {
 	const sendIcon = getElement<SVGElement>(container, '#send-icon')
 	const stopIcon = getElement<SVGElement>(container, '#stop-icon')
 	const charCount = getElement<HTMLElement>(container, '#char-count')
-	const modelSel = getElement<HTMLSelectElement>(container, '#model-select')
 	const ctxBar = getElement<HTMLElement>(container, '#ctx-bar')
 	const ctxAddBtn = getElement<HTMLButtonElement>(container, '#ctx-add-btn')
 	const newChatBtn = getElement<HTMLButtonElement>(container, '#new-chat-btn')
 	const attachBtn = getElement<HTMLButtonElement>(container, '#attach-btn')
-	const selBtn = getElement<HTMLButtonElement>(container, '#sel-btn')
 	const clearBtn = getElement<HTMLButtonElement>(container, '#clear-btn')
-	const settingsBtn = getElement<HTMLButtonElement>(container, '#settings-btn')
-	const settingsDialog = getElement<HTMLElement>(container, '#settings-dialog')
-	const settingsCloseBtn = getElement<HTMLButtonElement>(
-		container,
-		'#settings-close-btn'
-	)
-	const providerInput = getElement<HTMLSelectElement>(container, '#setting-provider')
-	const maxTokensInput = getElement<HTMLInputElement>(
-		container,
-		'#setting-max-tokens'
-	)
-	const temperatureInput = getElement<HTMLInputElement>(
-		container,
-		'#setting-temperature'
-	)
 	const lifetimeTokensEl = getElement<HTMLElement>(
 		container,
 		'#setting-lifetime-tokens'
 	)
-	const modelOpenAIInput = getElement<HTMLInputElement>(
-		container,
-		'#setting-model-openai'
-	)
-	const modelDeepSeekInput = getElement<HTMLInputElement>(
-		container,
-		'#setting-model-deepseek'
-	)
-	const modelClaudeInput = getElement<HTMLInputElement>(
-		container,
-		'#setting-model-claude'
-	)
-	const modelGeminiInput = getElement<HTMLInputElement>(
-		container,
-		'#setting-model-gemini'
-	)
-	const modelOllamaInput = getElement<HTMLInputElement>(
-		container,
-		'#setting-model-ollama'
-	)
-	const modelOpenRouterInput = getElement<HTMLInputElement>(
-		container,
-		'#setting-model-openrouter'
-	)
-	const ollamaHostInput = getElement<HTMLInputElement>(
-		container,
-		'#setting-ollama-host'
-	)
-	const openRouterSiteUrlInput = getElement<HTMLInputElement>(
-		container,
-		'#setting-openrouter-site-url'
-	)
-	const openRouterSiteNameInput = getElement<HTMLInputElement>(
-		container,
-		'#setting-openrouter-site-name'
-	)
-
 	const scrollableElements = container.querySelectorAll<HTMLElement>(
 		'#ai-panel, #msgs-wrap'
 	)
@@ -160,12 +106,13 @@ const renderPanel = (container: HTMLElement): void => {
 		el.ontouchmove = event => event.stopPropagation()
 	})
 
+	settingsContainer(container, doc)
+
 	let ctxFiles: ContextFile[] = []
 	let messages: ChatMessage[] = []
 	let isStreaming = false
 	let streamTimeout: number | null = null
 	let ctxMenuOpen = false
-	let settingsDialogOpen = false
 
 	const aiPanelEl = getElement<HTMLElement>(container, '#ai-panel')
 	const ctxMenuEl = createEl('div')
@@ -179,54 +126,6 @@ const renderPanel = (container: HTMLElement): void => {
 			syncInputState()
 		}
 	})
-
-	const formatTokenNumber = (value: number): string =>
-		Math.max(0, Math.round(value)).toLocaleString()
-	const CHARS_PER_ESTIMATED_TOKEN = 4
-
-	const refreshSettingsUI = (): void => {
-		modelSel.value = aiSettings.provider
-		providerInput.value = aiSettings.provider
-		maxTokensInput.value = String(aiSettings.maxTokens)
-		temperatureInput.value = String(aiSettings.temperature)
-		modelOpenAIInput.value = aiSettings.models.openai
-		modelDeepSeekInput.value = aiSettings.models.deepseek
-		modelClaudeInput.value = aiSettings.models.claude
-		modelGeminiInput.value = aiSettings.models.gemini
-		modelOllamaInput.value = aiSettings.models.ollama
-		modelOpenRouterInput.value = aiSettings.models.openrouter
-		ollamaHostInput.value = aiSettings.ollamaHost
-		openRouterSiteUrlInput.value = aiSettings.openRouterSiteUrl
-		openRouterSiteNameInput.value = aiSettings.openRouterSiteName
-		lifetimeTokensEl.textContent = formatTokenNumber(aiSettings.lifetimeTokensUsed)
-	}
-
-	const openSettingsDialog = (): void => {
-		refreshSettingsUI()
-		settingsDialog.classList.add('open')
-		settingsDialogOpen = true
-	}
-
-	const closeSettingsDialog = (): void => {
-		settingsDialog.classList.remove('open')
-		settingsDialogOpen = false
-	}
-
-	const persistSettings = (): void => {
-		saveAiSettingsToLocalStorage()
-		refreshSettingsUI()
-	}
-
-	const clampNumber = (
-		value: string,
-		min: number,
-		max: number,
-		fallback: number
-	): number => {
-		const parsed = Number(value)
-		if (!Number.isFinite(parsed)) return fallback
-		return Math.min(max, Math.max(min, parsed))
-	}
 
 	function resize(): void {
 		if (inputEl.scrollHeight < 40 || inputEl.value === '') {
@@ -245,10 +144,8 @@ const renderPanel = (container: HTMLElement): void => {
 	const draftMessage = localStorage.getItem('draft-message')
 	if (draftMessage) inputEl.value = draftMessage
 
-	loadAiSettingsFromLocalStorage()
 	resize()
 	updateCount()
-	refreshSettingsUI()
 
 	let debounceTimer: number | undefined
 
@@ -322,96 +219,10 @@ const renderPanel = (container: HTMLElement): void => {
 		messages = []
 		renderAll()
 	}
-	settingsBtn.onclick = openSettingsDialog
-	settingsCloseBtn.onclick = closeSettingsDialog
-
-	modelSel.addEventListener('change', () => {
-		aiSettings.provider = modelSel.value as Provider
-		persistSettings()
-	})
-
-	providerInput.addEventListener('change', () => {
-		aiSettings.provider = providerInput.value as Provider
-		persistSettings()
-	})
-
-	maxTokensInput.addEventListener('change', () => {
-		aiSettings.maxTokens = Math.round(
-			clampNumber(maxTokensInput.value, 1, 1000000, aiSettings.maxTokens)
-		)
-		persistSettings()
-	})
-
-	temperatureInput.addEventListener('change', () => {
-		aiSettings.temperature = clampNumber(
-			temperatureInput.value,
-			0,
-			1,
-			aiSettings.temperature
-		)
-		persistSettings()
-	})
-
-	modelOpenAIInput.addEventListener('change', () => {
-		aiSettings.models.openai = modelOpenAIInput.value.trim() || aiSettings.models.openai
-		persistSettings()
-	})
-	modelDeepSeekInput.addEventListener('change', () => {
-		aiSettings.models.deepseek =
-			modelDeepSeekInput.value.trim() || aiSettings.models.deepseek
-		persistSettings()
-	})
-	modelClaudeInput.addEventListener('change', () => {
-		aiSettings.models.claude = modelClaudeInput.value.trim() || aiSettings.models.claude
-		persistSettings()
-	})
-	modelGeminiInput.addEventListener('change', () => {
-		aiSettings.models.gemini = modelGeminiInput.value.trim() || aiSettings.models.gemini
-		persistSettings()
-	})
-	modelOllamaInput.addEventListener('change', () => {
-		aiSettings.models.ollama = modelOllamaInput.value.trim() || aiSettings.models.ollama
-		persistSettings()
-	})
-	modelOpenRouterInput.addEventListener('change', () => {
-		aiSettings.models.openrouter =
-			modelOpenRouterInput.value.trim() || aiSettings.models.openrouter
-		persistSettings()
-	})
-
-	ollamaHostInput.addEventListener('change', () => {
-		aiSettings.ollamaHost = ollamaHostInput.value.trim()
-		persistSettings()
-	})
-	openRouterSiteUrlInput.addEventListener('change', () => {
-		aiSettings.openRouterSiteUrl = openRouterSiteUrlInput.value.trim()
-		persistSettings()
-	})
-	openRouterSiteNameInput.addEventListener('change', () => {
-		aiSettings.openRouterSiteName = openRouterSiteNameInput.value.trim()
-		persistSettings()
-	})
-
 	ctxAddBtn.onclick = event =>
 		openContextMenu(event.currentTarget as HTMLElement)
 	attachBtn.onclick = event =>
 		openContextMenu(event.currentTarget as HTMLElement)
-
-	selBtn.onclick = () => {
-		container.dispatchEvent(
-			new CustomEvent('ai-panel-get-selection', {
-				detail: {
-					onSelection: (text: string) => {
-						if (!text) return
-						inputEl.value += `\n\`\`\`\n${text}\n\`\`\`\n`
-						resize()
-						updateCount()
-						inputEl.focus()
-					}
-				}
-			})
-		)
-	}
 
 	function renderCtxBar(): void {
 		ctxBar.querySelectorAll('.ctx-chip').forEach(chip => chip.remove())
@@ -577,21 +388,11 @@ const renderPanel = (container: HTMLElement): void => {
 					<button class="act-btn regen-btn" title="Retry">
 						<svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.5 15a9 9 0 1 1-2.7-6.7L23 10"/></svg> retry
 					</button>
-					<button class="act-btn thumbup-btn" title="Good">
-						<svg viewBox="0 0 24 24"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z"/><path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>
-					</button>
-					<button class="act-btn thumbdn-btn" title="Bad">
-						<svg viewBox="0 0 24 24"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3H10z"/><path d="M17 2h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"/></svg>
-					</button>
 				</div>`
 
 			const aiContent = row.querySelector<HTMLElement>('.ai-content')
 			const copyBtn = row.querySelector<HTMLButtonElement>('.copy-btn')
 			const regenBtn = row.querySelector<HTMLButtonElement>('.regen-btn')
-			const thumbUpBtn = row.querySelector<HTMLButtonElement>('.thumbup-btn')
-			const thumbDownBtn =
-				row.querySelector<HTMLButtonElement>('.thumbdn-btn')
-
 			attachCodeButtons(aiContent)
 			copyBtn?.addEventListener('click', () => copyText(msg.text, copyBtn))
 			regenBtn?.addEventListener('click', () => {
@@ -601,16 +402,6 @@ const renderPanel = (container: HTMLElement): void => {
 					renderAll()
 					simulateAIResponse(prev.text, prev.ctxName || null)
 				}
-			})
-			thumbUpBtn?.addEventListener('click', event => {
-				;(event.currentTarget as HTMLButtonElement).classList.toggle(
-					'active'
-				)
-			})
-			thumbDownBtn?.addEventListener('click', event => {
-				;(event.currentTarget as HTMLButtonElement).classList.toggle(
-					'active'
-				)
 			})
 		}
 
@@ -721,6 +512,8 @@ const renderPanel = (container: HTMLElement): void => {
 					30 + Math.random() * 50
 				)
 			} else {
+				const CHARS_PER_ESTIMATED_TOKEN = 4
+
 				// Approximation only: actual token usage varies by model/tokenizer.
 				const estimatedInputTokens = Math.max(
 					1,
@@ -730,8 +523,11 @@ const renderPanel = (container: HTMLElement): void => {
 					1,
 					Math.ceil(fullResponse.length / CHARS_PER_ESTIMATED_TOKEN)
 				)
+
 				addLifetimeTokens(estimatedInputTokens + estimatedOutputTokens)
-				lifetimeTokensEl.textContent = formatTokenNumber(aiSettings.lifetimeTokensUsed)
+				lifetimeTokensEl.textContent = formatTokenNumber(
+					aiSettings.lifetimeTokensUsed
+				)
 				endStream()
 			}
 		}
@@ -830,15 +626,8 @@ const renderPanel = (container: HTMLElement): void => {
 	doc.addEventListener(
 		'click',
 		event => {
-			if (
-				settingsDialogOpen &&
-				event.target instanceof Element &&
-				event.target.id === 'settings-dialog'
-			) {
-				closeSettingsDialog()
-				return
-			}
 			if (!ctxMenuOpen) return
+
 			const target = event.target
 			if (!(target instanceof Node)) return
 			if (
@@ -861,9 +650,6 @@ const renderPanel = (container: HTMLElement): void => {
 		clearContext: (): void => {
 			ctxFiles = []
 			renderCtxBar()
-		},
-		setModel: (model: string): void => {
-			modelSel.value = model
 		},
 		clear: (): void => {
 			messages = []
