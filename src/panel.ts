@@ -1,13 +1,11 @@
 import panel from './panel.html'
 import { RANDOM_RESPONSES } from './configs/constants'
-import { renderMarkdown, renderEditedFileLines, EditedFileLines } from './panel/markdown'
-import type {
-	AIPanelAPI,
-	ChatMessage,
-	ContextFile,
-	EditorManagerLike,
-	FileLike
-} from './panel/types'
+import {
+	renderMarkdown,
+	renderEditedFileLines,
+	EditedFileLines
+} from './panel/markdown'
+import type { AIPanelAPI, ChatMessage, ContextFile } from './panel/types'
 import {
 	decodeBase64Safe,
 	escapeHtml,
@@ -22,6 +20,40 @@ declare global {
 }
 
 const renderPanel = (container: HTMLElement): void => {
+	const workspaceFolders = window.addedFolder?.map(folder => folder.url)
+	//clg(workspaceFolders.join(' | '))
+
+	const activeFiles = window.editorManager?.files
+		.map((file: Acode.EditorFile): ContextFile | null => {
+			const newFile: ContextFile = {
+				id: file.id,
+				filename: file.filename,
+				previewName: file.filename,
+				previewUri: file.filename,
+				location: file.location,
+				uri: file.uri
+			}
+
+			// --- Firstly check if the active file is under the workspace, then use relative path for filename ---
+			for (const folder of workspaceFolders) {
+				if (file.location?.startsWith(folder)) {
+					const shortLocation = file.location
+						.slice(folder.length)
+						.replace(/^\/+|\/+$/g, '')
+
+					newFile.previewName = file.filename + ' /' + shortLocation
+					newFile.previewUri =
+						(shortLocation == '' ? '' : shortLocation + '/') +
+						file.filename
+				}
+			}
+
+			return newFile.location ? newFile : null
+		})
+		.filter(item => item != null)
+
+	//activeFiles.forEach(file => clg('Preview Name:', file.previewName))
+
 	container.style.padding = '0'
 	container.innerHTML = panel
 
@@ -61,8 +93,8 @@ const renderPanel = (container: HTMLElement): void => {
 		el.ontouchmove = event => event.stopPropagation()
 	})
 
-	let messages: ChatMessage[] = []
 	let ctxFiles: ContextFile[] = []
+	let messages: ChatMessage[] = []
 	let isStreaming = false
 	let streamTimeout: number | null = null
 	let ctxMenuOpen = false
@@ -196,12 +228,13 @@ const renderPanel = (container: HTMLElement): void => {
 
 	function renderCtxBar(): void {
 		ctxBar.querySelectorAll('.ctx-chip').forEach(chip => chip.remove())
+
 		ctxFiles.forEach((file, index) => {
 			const chip = createEl('div')
 			chip.className = 'ctx-chip'
 			chip.innerHTML = `
      <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-     <span class="ctx-chip-name">${esc(file.name)}</span>
+     <span class="ctx-chip-name">${esc(file.previewName)}</span>
      <button class="ctx-remove" title="Remove">
        <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
      </button>`
@@ -219,81 +252,9 @@ const renderPanel = (container: HTMLElement): void => {
 		})
 	}
 
-	function getActiveFiles(): ContextFile[] {
-		const editorManager = acode?.require?.('editorManager') as
-			| EditorManagerLike
-			| undefined
-		const candidates: ContextFile[] = []
-		const seen = new Set<string>()
-
-		const pushCandidate = (file?: FileLike): void => {
-			if (!file) return
-			const path =
-				file.path ||
-				file.uri ||
-				file.url ||
-				file.location ||
-				file.fullPath ||
-				file.file?.path ||
-				file.file?.uri ||
-				file.file?.url ||
-				''
-
-			const name = file.name || file.filename || getFileNameFromPath(path)
-			if (!name) return
-			const key = path || name
-			if (seen.has(key)) return
-			seen.add(key)
-
-			const content =
-				file.content ||
-				file.session?.getValue?.() ||
-				file.editor?.getValue?.() ||
-				''
-
-			candidates.push({ name, path: path || name, content })
-		}
-
-		const fileCollections = [
-			editorManager?.files,
-			editorManager?.openFiles,
-			editorManager?.editorFiles
-		]
-
-		fileCollections.forEach(collection => {
-			if (!Array.isArray(collection)) return
-			collection.forEach(file => pushCandidate(file))
-		})
-
-		pushCandidate(editorManager?.activeFile)
-		pushCandidate(editorManager?.activeFile?.file)
-		return candidates
-	}
-
 	function addContextFile(file: ContextFile): void {
-		if (!file.name) return
-		const exists = ctxFiles.some(
-			ctx => (ctx.path || ctx.name) === (file.path || file.name)
-		)
-		if (exists) return
-
-		ctxFiles.push({
-			name: file.name,
-			content: file.content || '',
-			path: file.path || file.name
-		})
+		ctxFiles.push(file)
 		renderCtxBar()
-	}
-
-	function insertContextToken(file: ContextFile): void {
-		if (!file.name) return
-		const safePath = esc(file.path || file.name)
-		const safeName = esc(file.name)
-		const token = `<a data-path="${safePath}">${safeName}</a>`
-		const spacer = inputEl.value && !/\s$/.test(inputEl.value) ? ' ' : ''
-		inputEl.value += `${spacer}${token} `
-		inputEl.focus()
-		syncInputState()
 	}
 
 	function closeContextMenu(): void {
@@ -303,25 +264,22 @@ const renderPanel = (container: HTMLElement): void => {
 	}
 
 	function openContextMenu(triggerEl: HTMLElement): void {
-		const files = getActiveFiles()
 		ctxMenuEl.innerHTML = ''
 
-		if (!files.length) {
+		if (!activeFiles.length) {
 			const empty = createEl('div')
 			empty.className = 'ctx-menu-empty'
 			empty.textContent = 'No active file. Open a file to attach.'
 			ctxMenuEl.appendChild(empty)
 		} else {
-			files.forEach(file => {
+			activeFiles.filter(file => !ctxFiles.includes(file)).forEach(file => {
 				const option = createEl('button')
 				option.className = 'ctx-menu-option'
 				option.type = 'button'
-				option.textContent = file.name
-				option.value = file.path || file.name
-				option.title = file.path || file.name
+				option.textContent = file.previewUri
+				option.value = file.uri
 				option.addEventListener('click', () => {
 					addContextFile(file)
-					insertContextToken(file)
 					closeContextMenu()
 				})
 				ctxMenuEl.appendChild(option)
@@ -376,7 +334,7 @@ const renderPanel = (container: HTMLElement): void => {
 			msg.ctxName
 				? `<div class="user-ctx-chip"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>${esc(
 						msg.ctxName
-					)}</div>`
+				  )}</div>`
 				: ''
 		}
       ${esc(msg.text).replace(/ /g, '&nbsp;').replace(/\n/g, '<br>')}
@@ -406,7 +364,11 @@ const renderPanel = (container: HTMLElement): void => {
 				{ line: 1, text: '<?php', isAdded: true },
 				{ line: 2, text: 'echo "Hello";', isAdded: true },
 				{ line: 3, text: '<div class="msg-actions">', isAdded: false },
-				{ line: 4, text: '<span class="msg-name">Rutex AI Agent</span>', isAdded: false },
+				{
+					line: 4,
+					text: '<span class="msg-name">Rutex AI Agent</span>',
+					isAdded: false
+				}
 			]
 
 			row.innerHTML = `
@@ -581,7 +543,7 @@ const renderPanel = (container: HTMLElement): void => {
 		if (!userText.trim()) return
 
 		const ctxName = ctxFiles.length
-			? ctxFiles.map(file => file.name).join(', ')
+			? ctxFiles.map(file => file.uri).join(', ')
 			: null
 
 		inputEl.value = ''
@@ -681,8 +643,8 @@ const renderPanel = (container: HTMLElement): void => {
 	)
 
 	window.aiPanel = {
-		addContext: (name: string, content: string): void => {
-			ctxFiles.push({ name, content })
+		addContext: (file: ContextFile): void => {
+			ctxFiles.push(file)
 			renderCtxBar()
 		},
 		clearContext: (): void => {

@@ -12,6 +12,9 @@ importers:
         specifier: ^11.11.1
         version: 11.11.1
     devDependencies:
+      '@acode-app/types':
+        specifier: ^1.11.6
+        version: 1.11.6
       '@babel/cli':
         specifier: ^7.23.0
         version: 7.28.6(@babel/core@7.29.0)
@@ -47,6 +50,9 @@ importers:
         version: 5.1.4(webpack@5.105.4)
 
 packages:
+
+  '@acode-app/types@1.11.6':
+    resolution: {integrity: sha512-cZHP+tO54qCBVq9Q3dbv7bObYhW+sh6465nVz6C/7pj9u5Xh9NHaeW0EttCtIJ7PDMNeBtSJhnxwJHX0UI8W4w==}
 
   '@babel/cli@7.28.6':
     resolution: {integrity: sha512-6EUNcuBbNkj08Oj4gAZ+BUU8yLCgKzgVX4gaTh09Ya2C8ICM4P+G30g4m3akRxSYAp3A/gnWchrNst7px4/nUQ==}
@@ -1957,6 +1963,8 @@ packages:
     engines: {node: '>=12.20'}
 
 snapshots:
+
+  '@acode-app/types@1.11.6': {}
 
   '@babel/cli@7.28.6(@babel/core@7.29.0)':
     dependencies:

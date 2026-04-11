@@ -1,7 +1,14 @@
 import { addIcon, removeIcon } from './sidebar'
 import { PLUGIN_ID } from './configs/constants'
 
+function clg(...messages: Array<string | boolean>) {
+	alert(messages.join(' '))
+}
+window.clg = clg
+
 class MainPlugin {
+	static baseUrl: string = ''
+
 	async init() {
 		addIcon()
 	}
@@ -18,15 +25,16 @@ if (window.acode) {
 		PLUGIN_ID,
 		async (
 			baseUrl: string,
-			$page: HTMLElement,
-			{
-				cacheFile,
-				cacheFileUrl
-			}: { cacheFile: string; cacheFileUrl: string }
+			$page: Acode.WCPage,
+			options: Acode.PluginInitOptions
 		) => {
+			const { cacheFile, cacheFileUrl } = options
+
 			if (!baseUrl.endsWith('/')) {
 				baseUrl += '/'
 			}
+
+			MainPlugin.baseUrl = baseUrl
 			await myPlugin.init()
 		}
 	)

@@ -5,7 +5,7 @@ import { PLUGIN_ID } from './configs/constants'
 const sideBarApps = acode.require('sidebarApps')
 
 const addIcon = () => {
-	acode.addIcon('ai-agent-icon', Icon, { monochrome: true })
+	acode.addIcon('ai-agent-icon', Icon)
 
 	sideBarApps.add(
 		'ai-agent-icon',
