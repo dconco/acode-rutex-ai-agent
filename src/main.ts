@@ -1,7 +1,8 @@
 import { addIcon, removeIcon } from './sidebar'
 import { PLUGIN_ID } from './configs/constants'
+import { example } from './chats/handleAgents'
 
-function clg(...messages: Array<string | boolean>) {
+function clg(...messages: unknown[]) {
 	alert(messages.join(' '))
 }
 window.clg = clg
@@ -10,11 +11,12 @@ class MainPlugin {
 	static baseUrl: string = ''
 
 	async init() {
-		addIcon()
+		example().catch(clg)
+		//addIcon()
 	}
 
 	async destroy() {
-		removeIcon()
+		//removeIcon()
 	}
 }
 

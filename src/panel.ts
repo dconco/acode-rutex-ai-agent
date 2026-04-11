@@ -20,37 +20,42 @@ declare global {
 }
 
 const renderPanel = (container: HTMLElement): void => {
-	const workspaceFolders = window.addedFolder?.map(folder => folder.url)
+	const getWorkspaceFolders = () =>
+		window.addedFolder?.map(folder => folder.url)
 	//clg(workspaceFolders.join(' | '))
 
-	const activeFiles = window.editorManager?.files
-		.map((file: Acode.EditorFile): ContextFile | null => {
-			const newFile: ContextFile = {
-				id: file.id,
-				filename: file.filename,
-				previewName: file.filename,
-				previewUri: file.filename,
-				location: file.location,
-				uri: file.uri
-			}
+	const getActiveFiles = () => {
+		const workspaceFolders = getWorkspaceFolders()
 
-			// --- Firstly check if the active file is under the workspace, then use relative path for filename ---
-			for (const folder of workspaceFolders) {
-				if (file.location?.startsWith(folder)) {
-					const shortLocation = file.location
-						.slice(folder.length)
-						.replace(/^\/+|\/+$/g, '')
-
-					newFile.previewName = file.filename + ' /' + shortLocation
-					newFile.previewUri =
-						(shortLocation == '' ? '' : shortLocation + '/') +
-						file.filename
+		return window.editorManager?.files
+			.map((file: Acode.EditorFile): ContextFile | null => {
+				const newFile: ContextFile = {
+					id: file.id,
+					filename: file.filename,
+					previewName: file.filename,
+					previewUri: file.filename,
+					location: file.location,
+					uri: file.uri
 				}
-			}
 
-			return newFile.location ? newFile : null
-		})
-		.filter(item => item != null)
+				// --- Firstly check if the active file is under the workspace, then use relative path for filename ---
+				for (const folder of workspaceFolders) {
+					if (file.location?.startsWith(folder)) {
+						const shortLocation = file.location
+							.slice(folder.length)
+							.replace(/^\/+|\/+$/g, '')
+
+						newFile.previewName = file.filename + ' /' + shortLocation
+						newFile.previewUri =
+							(shortLocation == '' ? '' : shortLocation + '/') +
+							file.filename
+					}
+				}
+
+				return newFile.location ? newFile : null
+			})
+			.filter(item => item != null)
+	}
 
 	//activeFiles.forEach(file => clg('Preview Name:', file.previewName))
 
@@ -265,14 +270,17 @@ const renderPanel = (container: HTMLElement): void => {
 
 	function openContextMenu(triggerEl: HTMLElement): void {
 		ctxMenuEl.innerHTML = ''
+		const filteredActiveFiles = getActiveFiles().filter(
+			file => !ctxFiles.includes(file)
+		)
 
-		if (!activeFiles.length) {
+		if (!filteredActiveFiles.length) {
 			const empty = createEl('div')
 			empty.className = 'ctx-menu-empty'
 			empty.textContent = 'No active file. Open a file to attach.'
 			ctxMenuEl.appendChild(empty)
 		} else {
-			activeFiles.filter(file => !ctxFiles.includes(file)).forEach(file => {
+			filteredActiveFiles.forEach(file => {
 				const option = createEl('button')
 				option.className = 'ctx-menu-option'
 				option.type = 'button'
@@ -472,7 +480,7 @@ const renderPanel = (container: HTMLElement): void => {
 		const randomIndex = Math.floor(Math.random() * RANDOM_RESPONSES.length)
 		let fullResponse = RANDOM_RESPONSES[randomIndex]
 
-		if (ctxName && ctxFiles.length > 0) {
+		if (ctxName) {
 			fullResponse = `**Context loaded:** ${ctxName}\n\n${fullResponse}`
 		}
 
@@ -546,9 +554,11 @@ const renderPanel = (container: HTMLElement): void => {
 			? ctxFiles.map(file => file.uri).join(', ')
 			: null
 
+		ctxFiles = []
 		inputEl.value = ''
 		resize()
 		updateCount()
+		renderCtxBar()
 
 		messages.push({ role: 'user', text: userText, ctxName })
 		renderAll()

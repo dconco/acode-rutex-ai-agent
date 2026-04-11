@@ -27,6 +27,10 @@
 	},
 	"browserslist": "cover 100%,not android < 5",
 	"dependencies": {
-		"highlight.js": "^11.11.1"
+		"@anthropic-ai/sdk": "^0.88.0",
+		"@google/genai": "^1.49.0",
+		"highlight.js": "^11.11.1",
+		"ollama": "^0.6.3",
+		"openai": "^6.34.0"
 	}
 }

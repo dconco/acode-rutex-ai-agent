@@ -7,7 +7,7 @@ declare module '*.html' {
 	export default content
 }
 
-declare function clg(...messages: Array<string | boolean>)
+declare function clg(...messages: unknown[])
 
 declare global {
 	interface Window {
