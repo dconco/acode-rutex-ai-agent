@@ -1248,6 +1248,107 @@
 	.settings-select:focus {
 		border-color: var(--accent);
 	}
+	.settings-model-trigger {
+		width: 100%;
+		border: 1px solid var(--border);
+		border-radius: 6px;
+		background: var(--bg-input);
+		color: var(--text);
+		padding: 6px 7px;
+		font-size: 11px;
+		font-family: var(--mono);
+		text-align: left;
+		cursor: pointer;
+	}
+	.settings-model-trigger:hover {
+		border-color: var(--border-hi);
+	}
+	.settings-model-trigger:focus {
+		border-color: var(--accent);
+	}
+	.settings-model-info {
+		font-family: var(--mono);
+		font-size: 9px;
+		color: var(--text-dim);
+		line-height: 1.45;
+		padding: 4px 0 0;
+	}
+	.settings-model-info .model-info-title {
+		font-size: 10px;
+		color: var(--text);
+		margin-bottom: 2px;
+	}
+	.settings-model-info strong {
+		color: var(--text-muted);
+	}
+	.settings-model-info ul {
+		margin: 2px 0 4px;
+		padding-left: 14px;
+	}
+	.settings-model-info .model-info-empty {
+		color: var(--text-dim);
+	}
+	.model-search-menu {
+		position: absolute;
+		min-width: 220px;
+		max-width: min(85vw, 300px);
+		max-height: 230px;
+		padding: 6px;
+		background: var(--bg-card);
+		border: 1px solid var(--border-hi);
+		border-radius: 8px;
+		display: none;
+		flex-direction: column;
+		gap: 6px;
+		box-shadow: 0 10px 22px rgba(0, 0, 0, 0.32);
+		z-index: 90;
+	}
+	.model-search-menu.open {
+		display: flex;
+	}
+	.model-search-input {
+		width: 100%;
+		border: 1px solid var(--border);
+		border-radius: 6px;
+		background: var(--bg-input);
+		color: var(--text);
+		padding: 6px 7px;
+		font-size: 10px;
+		font-family: var(--mono);
+		outline: none;
+	}
+	.model-search-input:focus {
+		border-color: var(--accent);
+	}
+	.model-search-options {
+		display: flex;
+		flex-direction: column;
+		gap: 2px;
+		max-height: 165px;
+		overflow-y: auto;
+	}
+	.model-search-option,
+	.model-search-empty {
+		font-size: 10px;
+		font-family: var(--mono);
+		padding: 6px 7px;
+		border-radius: 5px;
+		word-break: break-word;
+	}
+	.model-search-option {
+		cursor: pointer;
+		border: none;
+		text-align: left;
+		background: transparent;
+		color: var(--text-muted);
+	}
+	.model-search-option:hover {
+		background: var(--bg-hover);
+		color: var(--text);
+	}
+	.model-search-empty {
+		color: var(--text-dim);
+	}
 	.settings-note {
 		font-size: 10px;
 		color: var(--text-dim);
@@ -1527,32 +1628,36 @@
 			<div class="settings-sec">
 				<span class="settings-sec-title">OpenAI</span>
 				<div class="settings-row">
-					<label class="settings-label" for="setting-model-openai">Model</label>
-					<input class="settings-input" id="setting-model-openai" type="text" />
+					<label class="settings-label" for="setting-model-openai-btn">Model</label>
+					<button class="settings-model-trigger" id="setting-model-openai-btn" type="button"></button>
+					<div class="settings-model-info" id="setting-model-info-openai"></div>
 				</div>
 			</div>
 
 			<div class="settings-sec">
 				<span class="settings-sec-title">DeepSeek</span>
 				<div class="settings-row">
-					<label class="settings-label" for="setting-model-deepseek">Model</label>
-					<input class="settings-input" id="setting-model-deepseek" type="text" />
+					<label class="settings-label" for="setting-model-deepseek-btn">Model</label>
+					<button class="settings-model-trigger" id="setting-model-deepseek-btn" type="button"></button>
+					<div class="settings-model-info" id="setting-model-info-deepseek"></div>
 				</div>
 			</div>
 
 			<div class="settings-sec">
 				<span class="settings-sec-title">Claude</span>
 				<div class="settings-row">
-					<label class="settings-label" for="setting-model-claude">Model</label>
-					<input class="settings-input" id="setting-model-claude" type="text" />
+					<label class="settings-label" for="setting-model-claude-btn">Model</label>
+					<button class="settings-model-trigger" id="setting-model-claude-btn" type="button"></button>
+					<div class="settings-model-info" id="setting-model-info-claude"></div>
 				</div>
 			</div>
 
 			<div class="settings-sec">
 				<span class="settings-sec-title">Gemini</span>
 				<div class="settings-row">
-					<label class="settings-label" for="setting-model-gemini">Model</label>
-					<input class="settings-input" id="setting-model-gemini" type="text" />
+					<label class="settings-label" for="setting-model-gemini-btn">Model</label>
+					<button class="settings-model-trigger" id="setting-model-gemini-btn" type="button"></button>
+					<div class="settings-model-info" id="setting-model-info-gemini"></div>
 				</div>
 			</div>
 
@@ -1571,8 +1676,9 @@
 			<div class="settings-sec">
 				<span class="settings-sec-title">OpenRouter</span>
 				<div class="settings-row">
-					<label class="settings-label" for="setting-model-openrouter">Model</label>
-					<input class="settings-input" id="setting-model-openrouter" type="text" />
+					<label class="settings-label" for="setting-model-openrouter-btn">Model</label>
+					<button class="settings-model-trigger" id="setting-model-openrouter-btn" type="button"></button>
+					<div class="settings-model-info" id="setting-model-info-openrouter"></div>
 				</div>
 				<div class="settings-row">
 					<label class="settings-label" for="setting-openrouter-site-url">Site URL</label>
