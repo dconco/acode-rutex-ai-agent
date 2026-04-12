@@ -1,4 +1,4 @@
-import Ollama from 'ollama'
+import { Ollama } from 'ollama'
 import { aiSettings } from '../settings'
 import { StreamChunk, ChatMessage } from '../types'
 

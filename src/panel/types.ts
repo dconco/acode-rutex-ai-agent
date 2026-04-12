@@ -21,6 +21,5 @@ export interface ContextFile {
 export interface AIPanelAPI {
 	addContext: (file: ContextFile) => void
 	clearContext: () => void
-	setModel: (model: string) => void
 	clear: () => void
 }

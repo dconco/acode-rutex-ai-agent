@@ -1,4 +1,5 @@
 const { exec } = require('child_process')
+const webpack = require('webpack')
 const path = require('path')
 
 module.exports = (env, options) => {
@@ -31,7 +32,14 @@ module.exports = (env, options) => {
 			chunkFilename: '[name].js'
 		},
 		resolve: {
-			extensions: ['.ts', '.js'] // Only .ts and .js extensions
+			extensions: ['.ts', '.js'], // Only .ts and .js extensions
+			fallback: {
+				fs: false, // Cannot polyfill fs in browser, set to false
+				path: require.resolve('path-browserify'),
+				os: false,
+				crypto: false,
+				stream: false
+			}
 		},
 		module: {
 			rules
@@ -50,7 +58,10 @@ module.exports = (env, options) => {
 						})
 					})
 				}
-			}
+			},
+			new webpack.NormalModuleReplacementPlugin(/^node:/, resource => {
+				resource.request = resource.request.replace(/^node:/, '')
+			})
 		]
 	}
 
