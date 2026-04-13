@@ -7,9 +7,66 @@ import {
 
 let currentChatID: string = ''
 
+const CHAT_HISTORY_DB_NAME = 'rutex_ai_agent_chat_history'
+const CHAT_HISTORY_DB_VERSION = 1
+const CHAT_HISTORY_STORE = 'chat_histories'
+
+type ChatHistoryRecord = {
+	id: string
+	messages: ChatMessage[]
+}
+
 export type HistoryList = Record<string, string>
 
+const supportsIndexedDB = (): boolean => typeof indexedDB !== 'undefined'
+
+const openChatHistoryDB = (): Promise<IDBDatabase> =>
+	new Promise((resolve, reject) => {
+		const request = indexedDB.open(CHAT_HISTORY_DB_NAME, CHAT_HISTORY_DB_VERSION)
+
+		request.onupgradeneeded = () => {
+			const db = request.result
+			if (!db.objectStoreNames.contains(CHAT_HISTORY_STORE)) {
+				db.createObjectStore(CHAT_HISTORY_STORE, { keyPath: 'id' })
+			}
+		}
+
+		request.onsuccess = () => resolve(request.result)
+		request.onerror = () => reject(request.error)
+	})
+
+const withStore = async <T>(
+	mode: IDBTransactionMode,
+	handler: (store: IDBObjectStore) => IDBRequest<T>
+): Promise<T> => {
+	const db = await openChatHistoryDB()
+
+	return new Promise((resolve, reject) => {
+		const tx = db.transaction(CHAT_HISTORY_STORE, mode)
+		const store = tx.objectStore(CHAT_HISTORY_STORE)
+		const request = handler(store)
+
+		request.onsuccess = () => resolve(request.result)
+		request.onerror = () => reject(request.error)
+		tx.oncomplete = () => db.close()
+		tx.onerror = () => reject(tx.error)
+		tx.onabort = () => reject(tx.error)
+	})
+}
+
+const getLocalStorageChat = (chatID: string): ChatMessage[] => {
+	try {
+		return JSON.parse(
+			localStorage.getItem(CHAT_HISTORY_PREFIX + chatID) || '[]'
+		) as ChatMessage[]
+	} catch {
+		return []
+	}
+}
+
 export const getHistoryList = (): HistoryList => {
+	if (!hasLocalStorage()) return {} as HistoryList
+
 	try {
 		return JSON.parse(
 			localStorage.getItem(CHAT_HISTORY_PREFIX) || '{}'
@@ -20,6 +77,8 @@ export const getHistoryList = (): HistoryList => {
 }
 
 export function editChatHistoryList(historyList: (lists: HistoryList) => void) {
+	if (!hasLocalStorage()) return
+
 	const history = getHistoryList()
 	historyList(history)
 	localStorage.setItem(CHAT_HISTORY_PREFIX, JSON.stringify(history))
@@ -29,57 +88,93 @@ export const newChatHistory = () => {
 	currentChatID = ''
 }
 
-export const saveChatHistory = (messages: ChatMessage[]) => {
-	if (!hasLocalStorage()) return
-
-	if (currentChatID == '') {
+export const saveChatHistory = async (messages: ChatMessage[]) => {
+	if (currentChatID === '') {
 		const chatName = messages[0]?.text.substring(0, 25)
 		currentChatID = crypto.randomUUID()
 
-		localStorage.setItem(LAST_ACTIVE_CHAT_HISTORY_KEY, currentChatID)
-		editChatHistoryList(lists => (lists[currentChatID] = chatName))
+		if (hasLocalStorage()) {
+			localStorage.setItem(LAST_ACTIVE_CHAT_HISTORY_KEY, currentChatID)
+			editChatHistoryList(lists => (lists[currentChatID] = chatName))
+		}
 	}
 
-	localStorage.setItem(
-		CHAT_HISTORY_PREFIX + currentChatID,
-		JSON.stringify(messages)
-	)
+	if (supportsIndexedDB()) {
+		await withStore('readwrite', store =>
+			store.put({ id: currentChatID, messages } as ChatHistoryRecord)
+		)
+		return
+	}
+
+	if (hasLocalStorage()) {
+		localStorage.setItem(
+			CHAT_HISTORY_PREFIX + currentChatID,
+			JSON.stringify(messages)
+		)
+	}
 }
 
-export const retrieveChatHistory = (): ChatMessage[] => {
-	if (!hasLocalStorage()) return [] as ChatMessage[]
-
+export const retrieveChatHistory = async (): Promise<ChatMessage[]> => {
 	if (currentChatID == '') {
-		currentChatID = localStorage.getItem(LAST_ACTIVE_CHAT_HISTORY_KEY) || ''
-	   clg('Reused chat ID:', currentChatID)
+		if (hasLocalStorage()) {
+			currentChatID = localStorage.getItem(LAST_ACTIVE_CHAT_HISTORY_KEY) || ''
+		}
 	}
 
-	try {
-		return JSON.parse(
-			localStorage.getItem(CHAT_HISTORY_PREFIX + currentChatID) || '[]'
-		) as ChatMessage[]
-	} catch {
-		return [] as ChatMessage[]
+	if (currentChatID === '') return []
+
+	if (supportsIndexedDB()) {
+		try {
+			const record = await withStore('readonly', store =>
+				store.get(currentChatID)
+			)
+			return (record as ChatHistoryRecord | undefined)?.messages || []
+		} catch {
+			return [] as ChatMessage[]
+		}
 	}
+
+	if (!hasLocalStorage()) return [] as ChatMessage[]
+	return getLocalStorageChat(currentChatID)
 }
 
-export const deleteChatHistory = (chatID: string | null = null) => {
+export const deleteChatHistory = async (chatID: string | null = null) => {
 	if (!chatID) chatID = currentChatID
-	if (chatID == '' || !hasLocalStorage()) return
+	if (chatID == '') return
 
 	if (chatID === currentChatID) currentChatID = ''
 
-	editChatHistoryList(lists => delete lists[chatID])
-	localStorage.removeItem(CHAT_HISTORY_PREFIX + chatID)
+	if (supportsIndexedDB()) {
+		try {
+			await withStore('readwrite', store => store.delete(chatID))
+		} catch {
+			// Ignore IndexedDB deletion errors and continue with fallback cleanup.
+		}
+	}
+
+	if (hasLocalStorage()) {
+		editChatHistoryList(lists => delete lists[chatID])
+		localStorage.removeItem(CHAT_HISTORY_PREFIX + chatID)
+	}
 }
 
-export const deleteAllChatHistory = () => {
-	if (!hasLocalStorage()) return
-
-	editChatHistoryList(lists => {
-		for (const chatID in lists) {
-			localStorage.removeItem(CHAT_HISTORY_PREFIX + chatID)
+export const deleteAllChatHistory = async () => {
+	if (supportsIndexedDB()) {
+		try {
+			await withStore('readwrite', store => store.clear())
+		} catch {
+			// no-op fallback: localStorage cleanup below handles legacy entries.
 		}
-		lists = {}
-	})
+	}
+	
+	if (hasLocalStorage()) {
+		editChatHistoryList(lists => {
+			for (const chatID in lists) {
+				localStorage.removeItem(CHAT_HISTORY_PREFIX + chatID)
+			}
+			Object.keys(lists).forEach(chatID => delete lists[chatID])
+		})
+	}
+
+	currentChatID = ''
 }

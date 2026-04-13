@@ -212,7 +212,7 @@ const renderPanel = (container: HTMLElement): void => {
 	clearBtn.onclick = () => {
 		messages = []
 		renderAll()
-		deleteChatHistory()
+		void deleteChatHistory()
 	}
 	ctxAddBtn.onclick = event =>
 		openContextMenu(event.currentTarget as HTMLElement)
@@ -544,7 +544,7 @@ const renderPanel = (container: HTMLElement): void => {
 		messages.push({ role: 'user', text, ctx, workspaceUsed: getWorkspaceFolders().join(' | ') })
 		render()
 
-		saveChatHistory(messages)
+		void saveChatHistory(messages)
 		window.localStorage?.removeItem('draft-message')
 
 		simulateAIResponse()
@@ -590,7 +590,11 @@ const renderPanel = (container: HTMLElement): void => {
 	const draftMessage = window.localStorage?.getItem('draft-message')
 	if (draftMessage) inputEl.value = draftMessage
 
-	messages = retrieveChatHistory()
+	void retrieveChatHistory().then(history => {
+		messages = history
+		renderAll()
+		scrollBottom()
+	})
 	settingsContainer(container, doc)
 	scrollBottom()
 	resize()

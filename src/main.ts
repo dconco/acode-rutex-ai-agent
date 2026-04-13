@@ -35,7 +35,7 @@ class MainPlugin {
 
 	async destroy() {
 		removeIcon()
-		deleteAllChatHistory()
+		await deleteAllChatHistory()
 
 		if (hasLocalStorage()) {
 			localStorage.removeItem('draft-message')
