@@ -9,6 +9,7 @@ import {
    PLUGIN_ID,
    AI_SETTINGS_STORAGE_KEY,
    LAST_ACTIVE_CHAT_HISTORY_KEY,
+	CHAT_HISTORY_PREFIX,
 } from "./configs/constants";
 import { aiSettings, loadAiSettingsFromLocalStorage } from "./chats/settings";
 import { Provider } from "./chats/types";
@@ -35,6 +36,7 @@ class MainPlugin {
       localStorage.removeItem("draft-message");
       localStorage.removeItem(AI_SETTINGS_STORAGE_KEY);
       localStorage.removeItem(LAST_ACTIVE_CHAT_HISTORY_KEY);
+		localStorage.removeItem(CHAT_HISTORY_PREFIX)
    }
 }
 

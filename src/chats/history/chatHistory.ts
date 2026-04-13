@@ -9,6 +9,7 @@ let currentChatID: string = ''
 const CHAT_HISTORY_DB_NAME = 'rutex_ai_agent_chat_history'
 const CHAT_HISTORY_DB_VERSION = 1
 const CHAT_HISTORY_STORE = 'chat_histories'
+let chatHistoryDBPromise: Promise<IDBDatabase> | null = null
 
 type ChatHistoryRecord = {
 	id: string
@@ -21,8 +22,10 @@ export type HistoryList = Record<string, string>
 
 const supportsIndexedDB = (): boolean => typeof indexedDB !== 'undefined'
 
-const openChatHistoryDB = (): Promise<IDBDatabase> =>
-	new Promise((resolve, reject) => {
+const initializeChatHistoryDB = (): Promise<IDBDatabase> => {
+	if (chatHistoryDBPromise) return chatHistoryDBPromise
+
+	chatHistoryDBPromise = new Promise((resolve, reject) => {
 		const request = indexedDB.open(CHAT_HISTORY_DB_NAME, CHAT_HISTORY_DB_VERSION)
 
 		request.onupgradeneeded = () => {
@@ -32,15 +35,29 @@ const openChatHistoryDB = (): Promise<IDBDatabase> =>
 			}
 		}
 
-		request.onsuccess = () => resolve(request.result)
-		request.onerror = () => reject(request.error)
+		request.onsuccess = () => {
+			const db = request.result
+			db.onversionchange = () => {
+				db.close()
+				chatHistoryDBPromise = null
+			}
+			resolve(db)
+		}
+
+		request.onerror = () => {
+			chatHistoryDBPromise = null
+			reject(request.error)
+		}
 	})
+
+	return chatHistoryDBPromise
+}
 
 const withStore = async <T>(
 	mode: IDBTransactionMode,
 	handler: (store: IDBObjectStore) => IDBRequest<T>
 ): Promise<T> => {
-	const db = await openChatHistoryDB()
+	const db = await initializeChatHistoryDB()
 
 	return new Promise((resolve, reject) => {
 		const tx = db.transaction(CHAT_HISTORY_STORE, mode)
@@ -49,7 +66,6 @@ const withStore = async <T>(
 
 		request.onsuccess = () => resolve(request.result)
 		request.onerror = () => reject(request.error)
-		tx.oncomplete = () => db.close()
 		tx.onerror = () => reject(tx.error)
 		tx.onabort = () => reject(tx.error)
 	})
@@ -145,12 +161,11 @@ export const deleteChatHistory = async (chatID: string | null = null) => {
 		} catch {
 			// Ignore IndexedDB deletion errors and continue with fallback cleanup.
 		}
-	}
-
-	else {
-		editChatHistoryList(lists => delete lists[chatID])
+	} else {
 		localStorage.removeItem(CHAT_HISTORY_PREFIX + chatID)
 	}
+
+	editChatHistoryList(lists => delete lists[chatID])
 }
 
 export const deleteAllChatHistory = async () => {
@@ -167,9 +182,13 @@ export const deleteAllChatHistory = async () => {
 			for (const chatID in lists) {
 				localStorage.removeItem(CHAT_HISTORY_PREFIX + chatID)
 			}
-			Object.keys(lists).forEach(chatID => delete lists[chatID])
 		})
 	}
+
+	// --- Clear the history list and reset current chat ID ---
+	editChatHistoryList(lists => {
+		lists = {}
+	})
 
 	currentChatID = ''
 }
