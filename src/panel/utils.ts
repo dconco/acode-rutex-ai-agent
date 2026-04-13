@@ -28,3 +28,36 @@ export const getFileNameFromPath = (path: string): string => {
 	const parts = path.split(/[\\/]/)
 	return parts[parts.length - 1] || path
 }
+
+export function copyText(
+	text: string,
+	button?: HTMLButtonElement | null
+): void {
+	const done = (): void => {
+		if (!button) return
+		const original = button.innerHTML
+		button.innerHTML =
+			'<svg viewBox="0 0 24 24" width="10" height="10" stroke="currentColor" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> copied!'
+		button.classList.add('copied')
+		setTimeout(() => {
+			button.innerHTML = original
+			button.classList.remove('copied')
+		}, 1800)
+	}
+
+	const fallbackCopy = (): void => {
+		const textarea = Object.assign(createEl('textarea'), { value: text })
+		textarea.style.cssText = 'position:fixed;opacity:0'
+		doc.body.appendChild(textarea)
+		textarea.select()
+		doc.execCommand('copy')
+		textarea.remove()
+		done()
+	}
+
+	if (navigator.clipboard) {
+		navigator.clipboard.writeText(text).then(done).catch(fallbackCopy)
+	} else {
+		fallbackCopy()
+	}
+}

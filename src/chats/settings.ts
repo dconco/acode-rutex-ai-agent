@@ -94,11 +94,11 @@ export const aiSettings: AISettings = {
 	// ── Model per provider ───────────────────────
 	models: {
 		claude: 'claude-sonnet-4-6', // claude-opus-4-6 | claude-haiku-4-5
-		openai: 'gpt-4o', // gpt-4.1 | gpt-5.4 | o3 | o4-mini
+		openai: 'gpt-5.3-codex', // gpt-4.1 | gpt-5.4 | o3 | o4-mini
 		gemini: 'gemini-2.5-flash', // gemini-2.5-pro | gemini-3-flash-preview
 		deepseek: 'deepseek-chat', // deepseek-reasoner (thinking/CoT mode)
 		ollama: 'llama3.1', // any model pulled locally
-		openrouter: 'anthropic/claude-opus-4' // <provider>/<model> — 300+ available
+		openrouter: 'anthropic/claude-opus-4.1' // <provider>/<model> — 300+ available
 	},
 
 	// ── API keys ─────────────────────────────────
@@ -107,7 +107,7 @@ export const aiSettings: AISettings = {
 		openai: '',
 		gemini: '',
 		deepseek: '',
-		ollama: '', // no key needed for local Ollama
+		ollama: '',
 		openrouter: ''
 	},
 
@@ -120,7 +120,7 @@ export const aiSettings: AISettings = {
 	maxTokens: 2048,
 
 	// ── Ollama-only ───────────────────────────────
-	ollamaHost: 'http://localhost:11434',
+	ollamaHost: '',
 
 	// ── OpenRouter-only (optional attribution) ────
 	openRouterSiteUrl: '',

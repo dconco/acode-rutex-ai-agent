@@ -42,9 +42,9 @@ import { StreamChunk, StreamFunction, ChatMessage } from './types'
  *     if (chunk.type === "text") appendToUI(chunk.delta);
  *   }
  */
-export async function* sendChat(
+export async function sendChat(
 	messages: ChatMessage[],
-	signal?: AbortSignal
+	signal: AbortSignal
 ): AsyncGenerator<StreamChunk> {
 	const { provider } = aiSettings
 	const model = aiSettings.models[provider]

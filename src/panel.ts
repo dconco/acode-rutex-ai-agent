@@ -11,7 +11,8 @@ import {
 	decodeBase64Safe,
 	escapeHtml,
 	getElement,
-	getFileNameFromPath
+	getFileNameFromPath,
+	copyText
 } from './panel/utils'
 import { settingsContainer } from './panel/settingsContainer'
 import {
@@ -439,7 +440,7 @@ const renderPanel = (container: HTMLElement): void => {
 		renderAll()
 	}
 
-	function simulateAIResponse(userMessage: string, ctx: string | null): void {
+	function simulateAIResponse(): void {
 		const thinking = createEl('div')
 		thinking.className = 'thinking-row'
 		thinking.innerHTML =
@@ -452,52 +453,29 @@ const renderPanel = (container: HTMLElement): void => {
 		stopIcon.style.display = ''
 		sendBtn.classList.add('stop')
 		sendBtn.disabled = false
-		return
-		/*
-		const randomIndex = Math.floor(Math.random() * RANDOM_RESPONSES.length)
-		let fullResponse = RANDOM_RESPONSES[randomIndex]
 
-		if (ctx) {
-			fullResponse = `**Context loaded:** ${ctx}\n\n${fullResponse}`
-		}
-
-		let aiText = ''
 		let aiIdx: number | null = null
 		let liveRow: HTMLDivElement | null = null
 		let liveContent: HTMLElement | null = null
-		let chunkIndex = 0
 
-		const chunks: string[] = []
-		const words = fullResponse.split(/(\s+)/)
-		let currentChunk = ''
-
-		for (let index = 0; index < words.length; index++) {
-			currentChunk += words[index]
-			if (currentChunk.length >= 5 || index === words.length - 1) {
-				chunks.push(currentChunk)
-				currentChunk = ''
-			}
+      // --- INITIAL AI RESPONSE HTML ---
+			thinking.remove()
+			messages.push({ role: 'ai', text: '' })
+			aiIdx = messages.length - 1
+			liveRow = createEl('div')
+			liveRow.className = 'msg-row assistant'
+			liveRow.innerHTML = `
+     <div class="msg-meta">
+       <div class="msg-avatar ai-av"><svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg></div>
+       <span class="msg-name">Rutex AI Agent</span>
+     </div>
+     <div class="ai-content" id="live-ai-content"></div>`
+			msgsInner.appendChild(liveRow)
+			liveContent =
+				liveRow.querySelector<HTMLElement>('#live-ai-content')
 		}
 
 		const sendChunk = (): void => {
-			if (chunkIndex < chunks.length) {
-				if (aiIdx === null) {
-					thinking.remove()
-					messages.push({ role: 'ai', text: '' })
-					aiIdx = messages.length - 1
-					liveRow = createEl('div')
-					liveRow.className = 'msg-row assistant'
-					liveRow.innerHTML = `
-           <div class="msg-meta">
-             <div class="msg-avatar ai-av"><svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg></div>
-             <span class="msg-name">Rutex AI Agent</span>
-           </div>
-           <div class="ai-content" id="live-ai-content"></div>`
-					msgsInner.appendChild(liveRow)
-					liveContent =
-						liveRow.querySelector<HTMLElement>('#live-ai-content')
-				}
-
 				aiText += chunks[chunkIndex]
 				if (aiIdx != null) {
 					messages[aiIdx].text = aiText
@@ -510,33 +488,8 @@ const renderPanel = (container: HTMLElement): void => {
 					attachCodeButtons(liveContent)
 				}
 				scrollBottom()
-				chunkIndex += 1
-				streamTimeout = window.setTimeout(
-					sendChunk,
-					30 + Math.random() * 50
-				)
-			} else {
-				const CHARS_PER_ESTIMATED_TOKEN = 4
-
-				// Approximation only: actual token usage varies by model/tokenizer.
-				const estimatedInputTokens = Math.max(
-					1,
-					Math.ceil(userMessage.length / CHARS_PER_ESTIMATED_TOKEN)
-				)
-				const estimatedOutputTokens = Math.max(
-					1,
-					Math.ceil(fullResponse.length / CHARS_PER_ESTIMATED_TOKEN)
-				)
-
-				addLifetimeTokens(estimatedInputTokens + estimatedOutputTokens)
-				lifetimeTokensEl.textContent = formatTokenNumber(
-					aiSettings.lifetimeTokensUsed
-				)
-				endStream()
 			}
 		}
-
-		streamTimeout = window.setTimeout(sendChunk, 100)*/
 	}
 
 	function handleSend(): void {
@@ -573,59 +526,8 @@ const renderPanel = (container: HTMLElement): void => {
 					copyText(decodeBase64Safe(button.dataset.enc || ''), button)
 				})
 			})
-
-		root
-			.querySelectorAll<HTMLButtonElement>('.insert-code-btn:not([data-b])')
-			.forEach(button => {
-				button.dataset.b = '1'
-				button.addEventListener('click', () => {
-					const code = decodeBase64Safe(button.dataset.enc || '')
-					container.dispatchEvent(
-						new CustomEvent('ai-panel-insert', {
-							detail: { code }
-						})
-					)
-					const originalHTML = button.innerHTML
-					button.innerHTML =
-						'<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>inserted!'
-					button.classList.add('inserted')
-					setTimeout(() => {
-						button.innerHTML = originalHTML
-						button.classList.remove('inserted')
-					}, 1800)
-				})
-			})
 	}
 
-	function copyText(text: string, button?: HTMLButtonElement | null): void {
-		const done = (): void => {
-			if (!button) return
-			const original = button.innerHTML
-			button.innerHTML =
-				'<svg viewBox="0 0 24 24" width="10" height="10" stroke="currentColor" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> copied!'
-			button.classList.add('copied')
-			setTimeout(() => {
-				button.innerHTML = original
-				button.classList.remove('copied')
-			}, 1800)
-		}
-
-		const fallbackCopy = (): void => {
-			const textarea = Object.assign(createEl('textarea'), { value: text })
-			textarea.style.cssText = 'position:fixed;opacity:0'
-			doc.body.appendChild(textarea)
-			textarea.select()
-			doc.execCommand('copy')
-			textarea.remove()
-			done()
-		}
-
-		if (navigator.clipboard) {
-			navigator.clipboard.writeText(text).then(done).catch(fallbackCopy)
-		} else {
-			fallbackCopy()
-		}
-	}
 
 	function scrollBottom(): void {
 		msgsWrap.scrollTop = msgsWrap.scrollHeight
@@ -649,22 +551,6 @@ const renderPanel = (container: HTMLElement): void => {
 		},
 		true
 	)
-
-	window.aiPanel = {
-		addContext: (file: ContextFile): void => {
-			ctxFiles.push(file)
-			renderCtxBar()
-		},
-		clearContext: (): void => {
-			ctxFiles = []
-			renderCtxBar()
-		},
-		clear: (): void => {
-			messages = []
-			deleteChatHistory()
-			renderAll()
-		}
-	}
 
 	const draftMessage = window.localStorage?.getItem('draft-message')
 	if (draftMessage) inputEl.value = draftMessage

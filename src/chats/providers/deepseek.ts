@@ -48,13 +48,31 @@ async function* streamDeepSeek(
 		}
 	}
 
-	// DeepSeek does not reliably send usage in stream mode — zeroed out here
+	const calculateUsage = () => {
+		const CHARS_PER_ESTIMATED_TOKEN = 4
+
+		const estimatedInputTokens = Math.max(
+			1,
+			Math.ceil(fullText.length / CHARS_PER_ESTIMATED_TOKEN)
+		)
+		const estimatedOutputTokens = Math.max(
+			1,
+			Math.ceil(fullText.length / CHARS_PER_ESTIMATED_TOKEN)
+		)
+		return {
+			inputTokens: estimatedInputTokens,
+			outputTokens: estimatedOutputTokens,
+			totalTokens: estimatedInputTokens + estimatedOutputTokens
+		}
+	}
+
+	// DeepSeek does not reliably send usage in stream mode — so we make a rough calculation
 	yield {
 		type: 'done',
 		text: fullText,
 		provider: 'deepseek',
 		model: resolvedModel,
-		usage: { inputTokens: 0, outputTokens: 0, totalTokens: 0 }
+		usage: calculateUsage()
 	}
 }
 

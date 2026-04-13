@@ -6,6 +6,7 @@ export interface PluginSettings {
 	claude: string
 	openai: string
 	gemini: string
+	ollama: string
 	deepseek: string
 	openrouter: string
 }

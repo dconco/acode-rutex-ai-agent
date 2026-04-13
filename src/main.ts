@@ -5,7 +5,11 @@ import {
 	loadSavedKeys
 } from './helpers/pluginSettings'
 import { addIcon, removeIcon } from './sidebar'
-import { PLUGIN_ID, AI_SETTINGS_STORAGE_KEY } from './configs/constants'
+import {
+	PLUGIN_ID,
+	AI_SETTINGS_STORAGE_KEY,
+	LAST_ACTIVE_CHAT_HISTORY_KEY
+} from './configs/constants'
 import {
 	aiSettings,
 	loadAiSettingsFromLocalStorage,
@@ -36,6 +40,7 @@ class MainPlugin {
 		if (hasLocalStorage()) {
 			localStorage.removeItem('draft-message')
 			localStorage.removeItem(AI_SETTINGS_STORAGE_KEY)
+			localStorage.removeItem(LAST_ACTIVE_CHAT_HISTORY_KEY)
 		}
 	}
 }
@@ -92,6 +97,13 @@ if (window.acode) {
 					prompt: 'Enter your OpenAI API Key',
 					promptType: 'text',
 					value: formatSecret(saved.openai)
+				},
+				{
+					key: 'ollama',
+					text: 'Ollama API Key (Optional)',
+					prompt: 'Enter your Ollama API Key (Optional, if you set it)',
+					promptType: 'text',
+					value: formatSecret(saved.ollama)
 				},
 				{
 					key: 'openrouter',

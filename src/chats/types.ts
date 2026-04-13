@@ -2,10 +2,8 @@
 // Types
 // ─────────────────────────────────────────────
 
-export type Role = 'user' | 'assistant'
-
 export interface ChatMessage {
-	role: Role
+	role: 'user' | 'assistant'
 	content: string
 }
 
