@@ -244,6 +244,11 @@ const renderPanel = (container: HTMLElement): void => {
    }
 
    function addContextFile(file: ContextFile): void {
+      // const exists = ctxFiles.some(
+      //    (ctxFile) => ctxFile.id === file.id || ctxFile.uri === file.uri,
+      // );
+      // if (exists) return;
+
       ctxFiles.push(file);
       renderCtxBar();
    }
@@ -256,8 +261,12 @@ const renderPanel = (container: HTMLElement): void => {
 
    function openContextMenu(triggerEl: HTMLElement): void {
       ctxMenuEl.innerHTML = "";
+      const attachedKeys = new Set(
+         ctxFiles.map((file) => `${file.id}::${file.uri}`),
+      );
+
       const filteredActiveFiles = getActiveFiles().filter(
-         (file) => !ctxFiles.includes(file),
+         (file) => !attachedKeys.has(`${file.id}::${file.uri}`),
       );
 
       if (!filteredActiveFiles.length) {
@@ -335,11 +344,9 @@ const renderPanel = (container: HTMLElement): void => {
       );
 
       regenBtn?.addEventListener("click", () => {
-         if (idx > 0) {
-            messages.splice(idx);
-            renderAll();
-            simulateAIResponse();
-         }
+			messages.splice(idx);
+			renderAll();
+			simulateAIResponse();
       });
    }
 
@@ -379,12 +386,10 @@ const renderPanel = (container: HTMLElement): void => {
 
          copyBtn?.addEventListener("click", () => copyText(msg.text, copyBtn));
          editBtn?.addEventListener("click", () => {
-            if (idx > 0) {
-               inputEl.value = msg.text;
-               messages.splice(idx - 1);
-               renderAll();
-               inputEl.focus();
-            }
+				inputEl.value = msg.text;
+				messages.splice(idx)
+				renderAll();
+				inputEl.focus();
          });
       } else {
          const editedFiles: EditedFileLines = [
