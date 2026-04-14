@@ -1,94 +1,89 @@
-import { Config, Ollama } from 'ollama'
 import { aiSettings } from '../settings'
 import { StreamChunk, ChatMessage } from '../types'
 
-// ─────────────────────────────────────────────
-// Ollama  (local inference)
-// ─────────────────────────────────────────────
-
 async function* streamOllama(
-	model: string,
-	messages: ChatMessage[],
-	signal?: AbortSignal
+   model: string,
+   messages: ChatMessage[],
+   signal?: AbortSignal
 ): AsyncGenerator<StreamChunk> {
-	let config: Partial<Config> = {
-		host: aiSettings.ollamaHost
-	}
+   const host = aiSettings.ollamaHost?.replace(/\/$/, '') || 'http://127.0.0.1:11434'
 
-	if (aiSettings.apiKeys.ollama.length) {
-		config = {
-			...config,
-			headers: {
-				Authorization: `Bearer ${aiSettings.apiKeys.ollama}`
-			}
-		}
-	}
+   const headers: Record<string, string> = {}
+   if (aiSettings.apiKeys.ollama?.length) {
+      headers['Authorization'] = `Bearer ${aiSettings.apiKeys.ollama}`
+   }
 
-	let ollama: Ollama
+   const body = JSON.stringify({
+      model,
+      stream: true,
+      messages: [
+         { role: 'system', content: aiSettings.systemInstruction },
+         ...messages.map(m => ({ role: m.role, content: m.content }))
+      ],
+      options: {
+         temperature: aiSettings.temperature,
+         num_predict: aiSettings.maxTokens
+      }
+   })
 
-	if (aiSettings.ollamaHost.length) {
-		ollama = new Ollama(config)
-	} else {
-		ollama = new Ollama()
-	}
+   console.log(`Connecting to Ollama at ${host}/api/chat`, { headers })
 
-	try {
-		const stream = await ollama.chat({
-			model,
-			stream: true,
-			messages: [
-				{ role: 'system', content: aiSettings.systemInstruction },
-				...messages.map(m => ({ role: m.role, content: m.content }))
-			],
-			options: {
-				temperature: aiSettings.temperature,
-				num_predict: aiSettings.maxTokens
-			}
-		})
+   let response: Response
+   try {
+      response = await fetch(`${host}/api/chat`, { method: 'POST', headers, body, signal })
+   } catch (err: any) {
+      throw new Error(
+         `Failed to connect to Ollama at ${host}. ${err?.message ?? 'Network error — check CORS or host.'}`
+      )
+   }
 
-		let fullText = ''
-		let lastChunk: Awaited<typeof stream> extends AsyncIterable<infer T>
-			? T
-			: never
-		// @ts-ignore — we'll grab the final chunk for usage
-		lastChunk = null
+   if (!response.ok) {
+      const text = await response.text().catch(() => '')
+      throw new Error(`Ollama responded ${response.status}: ${text}`)
+   }
 
-		for await (const chunk of stream) {
-			if (signal?.aborted) break
+   const reader = response.body?.getReader()
+   if (!reader) throw new Error('No response body from Ollama')
 
-			const delta = chunk.message?.content ?? ''
-			if (delta) {
-				fullText += delta
-				yield { type: 'text', delta }
-			}
+   const decoder = new TextDecoder()
+   let fullText = ''
+   let lastChunk: any = null
 
-			// @ts-ignore
-			lastChunk = chunk
-		}
+   try {
+      while (signal?.aborted === false) {
+         const { done, value } = await reader.read()
+         if (done) break
 
-		yield {
-			type: 'done',
-			text: fullText,
-			provider: 'ollama',
-			// @ts-ignore
-			model: lastChunk?.model ?? model,
-			usage: {
-				// @ts-ignore
-				inputTokens: lastChunk?.prompt_eval_count ?? 0,
-				// @ts-ignore
-				outputTokens: lastChunk?.eval_count ?? 0,
-				// @ts-ignore
-				totalTokens:
-					(lastChunk?.prompt_eval_count ?? 0) + (lastChunk?.eval_count ?? 0)
-			}
-		}
-	} catch (error: any) {
-		const activeHost = aiSettings.ollamaHost
-		const reason = error instanceof Error ? error.message : 'unknown network error'
-		throw new Error(
-			`Failed to connect to Ollama at ${activeHost}. ${reason}`
-		)
-	}
+         const lines = decoder.decode(value, { stream: true }).split('\n').filter(Boolean)
+         for (const line of lines) {
+            try {
+               const chunk = JSON.parse(line)
+               lastChunk = chunk
+               const delta = chunk.message?.content ?? ''
+               if (delta) {
+                  fullText += delta
+                  yield { type: 'text', delta }
+               }
+            } catch {
+               // incomplete JSON line, skip
+            }
+         }
+      }
+   } finally {
+      reader.releaseLock()
+   }
+
+   yield {
+      type: 'done',
+      text: fullText,
+      provider: 'ollama',
+      model: lastChunk?.model ?? model,
+      usage: {
+         inputTokens: lastChunk?.prompt_eval_count ?? 0,
+         outputTokens: lastChunk?.eval_count ?? 0,
+         totalTokens: (lastChunk?.prompt_eval_count ?? 0) + (lastChunk?.eval_count ?? 0)
+      }
+   }
 }
 
 export default streamOllama
