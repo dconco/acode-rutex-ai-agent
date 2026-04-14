@@ -104,6 +104,13 @@ const renderPanel = (container: HTMLElement): void => {
       el.onwheel = (event) => event.stopPropagation();
       el.ontouchmove = (event) => event.stopPropagation();
    });
+	let autoScrollEnabled = true;
+
+	msgsWrap.addEventListener("scroll", () => {
+		const distanceFromBottom =
+			msgsWrap.scrollHeight - msgsWrap.scrollTop - msgsWrap.clientHeight;
+		autoScrollEnabled = distanceFromBottom <= 24;
+	});
 
    let messages: ChatMessage[] = [];
    let ctxFiles: ContextFile[] = [];
@@ -646,6 +653,7 @@ const renderPanel = (container: HTMLElement): void => {
    }
 
    function scrollBottom(): void {
+		if (!autoScrollEnabled) return;
       msgsWrap.scrollTop = msgsWrap.scrollHeight;
    }
 

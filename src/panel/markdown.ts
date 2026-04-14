@@ -26,69 +26,139 @@ hljs.registerLanguage("typescript", typescript as any);
 hljs.registerLanguage("html", xml as any);
 hljs.registerLanguage("xml", xml as any);
 
+const escapeHtml = (value: string): string =>
+   value
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;')
+
+const normalizeLanguage = (lang: string): string => {
+   const lower = lang.trim().toLowerCase()
+   if (!lower) return 'code'
+   if (lower === 'sh' || lower === 'shell') return 'bash'
+   if (lower === 'js') return 'javascript'
+   if (lower === 'ts') return 'typescript'
+   if (lower === 'md') return 'markdown'
+   if (lower === 'py') return 'python'
+   return lower
+}
+
+const renderInlineMarkdown = (text: string): string => {
+   let h = escapeHtml(text)
+   h = h.replace(/`([^`\n]+)`/g, '<code>$1</code>')
+   h = h.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+   h = h.replace(/\*(.+?)\*/g, '<em>$1</em>')
+   return h
+}
+
+const renderMarkdownBlock = (block: string): string => {
+   const lines = block.split('\n')
+   const output: string[] = []
+   let listType: 'ul' | 'ol' | null = null
+   let listItems: string[] = []
+
+   const flushList = (): void => {
+      if (!listType || !listItems.length) return
+      output.push(`<${listType}>${listItems.join('')}</${listType}>`)
+      listType = null
+      listItems = []
+   }
+
+   for (const rawLine of lines) {
+      const line = rawLine.trimEnd()
+      const trimmed = line.trim()
+
+      if (!trimmed) {
+         flushList()
+         continue
+      }
+
+      const headingMatch = /^(#{1,3})\s+(.+)$/.exec(trimmed)
+      if (headingMatch) {
+         flushList()
+         const level = headingMatch[1].length
+         output.push(`<h${level}>${renderInlineMarkdown(headingMatch[2])}</h${level}>`)
+         continue
+      }
+
+      const blockquoteMatch = /^>\s+(.+)$/.exec(trimmed)
+      if (blockquoteMatch) {
+         flushList()
+         output.push(`<blockquote>${renderInlineMarkdown(blockquoteMatch[1])}</blockquote>`)
+         continue
+      }
+
+      const unorderedMatch = /^[-*]\s+(.+)$/.exec(trimmed)
+      if (unorderedMatch) {
+         if (listType !== 'ul') flushList()
+         listType = 'ul'
+         listItems.push(`<li>${renderInlineMarkdown(unorderedMatch[1])}</li>`)
+         continue
+      }
+
+      const orderedMatch = /^\d+\.\s+(.+)$/.exec(trimmed)
+      if (orderedMatch) {
+         if (listType !== 'ol') flushList()
+         listType = 'ol'
+         listItems.push(`<li>${renderInlineMarkdown(orderedMatch[1])}</li>`)
+         continue
+      }
+
+      flushList()
+      output.push(`<p>${renderInlineMarkdown(trimmed)}</p>`)
+   }
+
+   flushList()
+   return output.join('')
+}
+
 export const renderMarkdown = (raw: string): string => {
-   let h = raw.replace(
-      /```(\w*)\n?([\s\S]*?)```/g,
-      (_, lang: string, code: string) => {
-         const language = lang || "code";
-         const encoded = btoa(unescape(encodeURIComponent(code.trimEnd())));
+   const parts: string[] = []
+   const fenceRegex = /```(\w*)\n([\s\S]*?)```/g
+   let lastIndex = 0
+   let match: RegExpExecArray | null
 
-         const highlighted = hljs.highlight(code.trimEnd(), { language }).value;
+   while ((match = fenceRegex.exec(raw)) !== null) {
+      const before = raw.slice(lastIndex, match.index)
+      if (before.trim()) {
+         parts.push(renderMarkdownBlock(before))
+      }
 
-         return `
-			<div class="code-block">
-				<div class="code-header">
-					<span class="code-lang">${language}</span>
-					<button class="code-btn copy-code-btn" data-enc="${encoded}">
-						<svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>copy
-					</button>
-				</div>
-				<div class="code-body">${highlighted}</div>
-			</div>`;
-      },
-   );
+      const language = normalizeLanguage(match[1] || 'code')
+      const code = match[2].replace(/\n$/, '').trimEnd()
+      const encoded = btoa(unescape(encodeURIComponent(code)))
 
-   h = h.replace(/^### (.+)$/gm, "<h3>$1</h3>");
-   h = h.replace(/^## (.+)$/gm, "<h2>$1</h2>");
-   h = h.replace(/^# (.+)$/gm, "<h1>$1</h1>");
+      let highlighted = code
+      try {
+         highlighted = hljs.getLanguage(language)
+            ? hljs.highlight(code, { language }).value
+            : hljs.highlightAuto(code).value
+      } catch {
+         highlighted = escapeHtml(code)
+      }
 
-   h = h.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
-   h = h.replace(/\*(.+?)\*/g, "<em>$1</em>");
-   h = h.replace(/^&gt; (.+)$/gm, "<blockquote>$1</blockquote>");
+      parts.push(`
+         <div class="code-block">
+            <div class="code-header">
+               <span class="code-lang">${escapeHtml(language)}</span>
+               <button class="code-btn copy-code-btn" data-enc="${encoded}">
+                  <svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>copy
+               </button>
+            </div>
+            <div class="code-body">${highlighted}</div>
+         </div>`)
 
-   h = h.replace(/((?:^[-*] .+(?:\n|$))+)/gm, (block) => {
-      const items = block
-         .trim()
-         .split("\n")
-         .map((line: string) => `<li>${line.replace(/^[-*] /, "")}</li>`)
-         .join("");
-      return `<ul>${items}</ul>`;
-   });
+     	lastIndex = match.index + match[0].length
+   }
 
-   h = h.replace(/((?:^\d+\. .+(?:\n|$))+)/gm, (block) => {
-      const items = block
-         .trim()
-         .split("\n")
-         .map((line: string) => `<li>${line.replace(/^\d+\. /, "")}</li>`)
-         .join("");
-      return `<ol>${items}</ol>`;
-   });
+   const tail = raw.slice(lastIndex)
+   if (tail.trim()) {
+      parts.push(renderMarkdownBlock(tail))
+   }
 
-   h = h.replace(/`([^`\n]+)`/g, "<code>$1</code>");
-   h = h.replace(/\n{2,}/g, "</p><p>");
-   h = h.replace(/\n/g, "<br>");
-   h = `<p>${h}</p>`;
-
-   h = h.replace(/<p>(<(?:div|ul|ol|h[1-3]|blockquote))/g, "$1");
-   h = h.replace(/((?:div|ul|ol|h[1-3]|blockquote)>)<\/p>/g, "$1");
-   h = h.replace(
-      /<p>\s*(<div class="code-block">[\s\S]*?<\/div>)\s*<\/p>/g,
-      "$1",
-   );
-   h = h.replace(/<br>\s*(<div class="code-block">)/g, "$1");
-   h = h.replace(/(<\/div>)\s*<br>/g, "$1");
-
-   return h;
+   return parts.join('')
 };
 
 export type EditedFileLines = Array<{
