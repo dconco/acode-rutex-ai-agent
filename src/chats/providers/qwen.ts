@@ -10,6 +10,13 @@ export default async function* (
 	messages: ChatMessage[],
 	signal?: AbortSignal
 ): AsyncGenerator<StreamChunk> {
+	const conversationHistory = messages
+		.map((message, index) => {
+			const role = message.role === 'assistant' ? 'Assistant' : 'User'
+			return `${index + 1}. ${role}: ${message.content}`
+		})
+		.join('\n')
+
 	const response = await fetch('https://qwen.aikit.club/v1/chat/completions', {
 		method: 'POST',
 		headers: {
@@ -22,8 +29,11 @@ export default async function* (
 			max_tokens: aiSettings.maxTokens,
 			stream: true,
 			messages: [
-				{ role: 'system', content: aiSettings.systemInstruction },
-				...messages.map(m => ({ role: m.role, content: m.content }))
+				{
+					role: 'system',
+					content: `${aiSettings.systemInstruction}\n\nConversation history:\n${conversationHistory}`
+				},
+				...messages.splice(0, messages.length - 1).map(m => ({ role: m.role, content: m.content }))
 			]
 		}),
 		signal
@@ -39,6 +49,12 @@ export default async function* (
 	let buffer = ''
 	let fullText = ''
 	let resolvedModel = model
+	
+	const usage = {
+		inputTokens: 0,
+		outputTokens: 0,
+		totalTokens: 0
+	}
 
 	while (true) {
 		const { done, value } = await reader.read()
@@ -57,8 +73,16 @@ export default async function* (
 
 			try {
 				const chunk = JSON.parse(data)
+
+				if (chunk.usage) {
+					usage.inputTokens += chunk.usage.prompt_tokens || 0
+					usage.outputTokens += chunk.usage.completion_tokens || 0
+					usage.totalTokens += chunk.usage.total_tokens || 0
+				}
+
 				resolvedModel = chunk.model ?? resolvedModel
 				const delta = chunk.choices?.[0]?.delta?.content ?? ''
+	
 				if (delta) {
 					fullText += delta
 					yield { type: 'text', model: resolvedModel, delta }
@@ -74,10 +98,6 @@ export default async function* (
 		text: fullText,
 		provider: 'qwen',
 		model: resolvedModel,
-		usage: {
-			inputTokens: 0,
-			outputTokens: 0,
-			totalTokens: 0
-		}
+		usage
 	}
 }

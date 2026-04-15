@@ -103,7 +103,8 @@ export const aiSettings: AISettings = {
 
 	// ── System instruction ───────────────────────
 	// Injected as the system prompt on every request across all providers.
-	systemInstruction: 'You are a helpful, concise assistant.',
+	systemInstruction: `
+	You are a helpful, concise assistant.',
 
 	// ── Shared inference parameters ──────────────
 	temperature: 0.7, // 0-1

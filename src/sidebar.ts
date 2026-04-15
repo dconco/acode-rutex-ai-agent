@@ -18,10 +18,7 @@ const addIcon = () => {
 		false,
 		() => {
 			// Optional: logic to run whenever the sidebar is toggled open
-			if (scrollBottom) {
-				scrollBottom()
-				alert('from sidebar')
-			} else alert('ScrollBottom isn\'t initialize')
+			if (scrollBottom) scrollBottom()
 		}
 	)
 }
