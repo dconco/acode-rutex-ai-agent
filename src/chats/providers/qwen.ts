@@ -1,9 +1,8 @@
-import OpenAI from 'openai'
 import { aiSettings } from '../settings'
 import { StreamChunk, ChatMessage } from '../types'
 
 // ─────────────────────────────────────────────
-// Qwen (OpenAI-compatible)
+// Qwen (OpenAI-compatible via fetch)
 // ─────────────────────────────────────────────
 
 export default async function* (
@@ -11,14 +10,13 @@ export default async function* (
 	messages: ChatMessage[],
 	signal?: AbortSignal
 ): AsyncGenerator<StreamChunk> {
-	const client = new OpenAI({
-		apiKey: aiSettings.apiKeys.qwen,
-		baseURL: 'https://qwen.aikit.club',
-		dangerouslyAllowBrowser: true
-	})
-
-	const stream = await client.chat.completions.create(
-		{
+	const response = await fetch('https://qwen.aikit.club/v1/chat/completions', {
+		method: 'POST',
+		headers: {
+			Authorization: `Bearer ${aiSettings.apiKeys.qwen}`,
+			'Content-Type': 'application/json'
+		},
+		body: JSON.stringify({
 			model,
 			temperature: aiSettings.temperature,
 			max_tokens: aiSettings.maxTokens,
@@ -27,49 +25,59 @@ export default async function* (
 				{ role: 'system', content: aiSettings.systemInstruction },
 				...messages.map(m => ({ role: m.role, content: m.content }))
 			]
-		},
-		{ signal }
-	)
+		}),
+		signal
+	})
 
+	if (!response.ok) {
+		const err = await response.text()
+		throw new Error(`Qwen API error ${response.status}: ${err}`)
+	}
+
+	const reader = response.body!.getReader()
+	const decoder = new TextDecoder()
+	let buffer = ''
 	let fullText = ''
 	let resolvedModel = model
 
-	for await (const chunk of stream) {
+	while (true) {
+		const { done, value } = await reader.read()
+		if (done) break
 		if (signal?.aborted) break
 
-		resolvedModel = chunk.model ?? resolvedModel
+		buffer += decoder.decode(value, { stream: true })
+		const lines = buffer.split('\n')
+		buffer = lines.pop() ?? ''
 
-		const delta = chunk.choices[0]?.delta?.content ?? ''
-		if (delta) {
-			fullText += delta
-			yield { type: 'text', model: resolvedModel, delta }
+		for (const line of lines) {
+			const trimmed = line.trim()
+			if (!trimmed || !trimmed.startsWith('data: ')) continue
+			const data = trimmed.slice(6)
+			if (data === '[DONE]') continue
+
+			try {
+				const chunk = JSON.parse(data)
+				resolvedModel = chunk.model ?? resolvedModel
+				const delta = chunk.choices?.[0]?.delta?.content ?? ''
+				if (delta) {
+					fullText += delta
+					yield { type: 'text', model: resolvedModel, delta }
+				}
+			} catch {
+				// malformed chunk, skip
+			}
 		}
 	}
 
-	const calculateUsage = () => {
-		const CHARS_PER_ESTIMATED_TOKEN = 4
-
-		const estimatedInputTokens = Math.max(
-			1,
-			Math.ceil(fullText.length / CHARS_PER_ESTIMATED_TOKEN)
-		)
-		const estimatedOutputTokens = Math.max(
-			1,
-			Math.ceil(fullText.length / CHARS_PER_ESTIMATED_TOKEN)
-		)
-		return {
-			inputTokens: estimatedInputTokens,
-			outputTokens: estimatedOutputTokens,
-			totalTokens: estimatedInputTokens + estimatedOutputTokens
-		}
-	}
-
-	// DeepSeek does not reliably send usage in stream mode — so we make a rough calculation
 	yield {
 		type: 'done',
 		text: fullText,
-		provider: 'deepseek',
+		provider: 'qwen',
 		model: resolvedModel,
-		usage: calculateUsage()
+		usage: {
+			inputTokens: 0,
+			outputTokens: 0,
+			totalTokens: 0
+		}
 	}
 }

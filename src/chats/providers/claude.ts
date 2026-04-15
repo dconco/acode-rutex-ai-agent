@@ -11,7 +11,10 @@ export default async function* (
 	messages: ChatMessage[],
 	signal?: AbortSignal
 ): AsyncGenerator<StreamChunk> {
-	const client = new Anthropic({ apiKey: aiSettings.apiKeys.claude })
+	const client = new Anthropic({
+		apiKey: aiSettings.apiKeys.claude,
+		dangerouslyAllowBrowser: true
+	})
 
 	const stream = await client.messages.stream({
 		model,

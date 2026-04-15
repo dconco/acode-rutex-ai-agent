@@ -3445,12 +3445,12 @@ export default [
 
 	// ─── Qwen ─────────────────────────────────────────────────────────────────
 	{
-		id: 'qwen/qwen-3.6-coder',
-		label: 'Qwen / Qwen 3.6 Coder',
+		id: 'qwen/qwen-3.5',
+		label: 'Qwen / Qwen 3.5',
 		contextWindow: '262K tokens',
 		maxOutputTokens: '64K tokens',
 		bestFor: ['Modern coding tasks', 'Tool use', 'High-context development'],
-		notes: 'Catalog placeholder for Qwen 3.6 coder line requested by users.'
+		notes: 'Catalog placeholder for Qwen 3.5 line requested by users.'
 	},
 	{
 		id: 'qwen/qwen3-coder:free',
