@@ -37,6 +37,7 @@ export default async function* (
 			},
 			tools
 		})
+		clg('Chat History', messages)
 
 		let response: Response
 		try {
@@ -47,6 +48,8 @@ export default async function* (
 				signal
 			})
 		} catch (err: any) {
+			if (err.name === 'AbortError') break
+
 			throw new Error(
 				`Failed to connect to Ollama at ${host}. ${
 					err?.message ?? 'Network error — check CORS or host.'
@@ -63,7 +66,7 @@ export default async function* (
 		if (!reader) throw new Error('No response body from Ollama')
 
 		const decoder = new TextDecoder()
-		const toolCalls: any[] = []
+		let toolCalls: any[] = []
 
 		try {
 			while (signal?.aborted === false) {
@@ -86,7 +89,7 @@ export default async function* (
 
 						if (chunk.message?.tool_calls?.length) {
 							toolCalls.push(...chunk.message.tool_calls)
-							alert(chunk.message.tool_calls)
+							clg('Tool calls:', chunk.message.tool_calls)
 						}
 					} catch {
 						// incomplete JSON line, skip
@@ -118,6 +121,7 @@ export default async function* (
 			}
 		}
 
+		toolCalls = []
 	}
 
 	yield {

@@ -21,7 +21,8 @@ export default async function* (
 		max_tokens: aiSettings.maxTokens,
 		temperature: aiSettings.temperature,
 		system: aiSettings.systemInstruction,
-		messages: messages.map(m => ({ role: m.role, content: m.content }))
+		messages: messages.map(m => ({ role: m.role, content: m.content }) as any),
+		signal
 	})
 
 	let fullText = ''

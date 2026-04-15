@@ -26,7 +26,7 @@ export default async function* (
 				stream: true,
 				messages: [
 					{ role: 'system', content: aiSettings.systemInstruction },
-					...messages.map(m => ({ role: m.role, content: m.content }))
+					...messages.map(m => ({ role: m.role, content: m.content }) as any)
 				]
 			}
 		},

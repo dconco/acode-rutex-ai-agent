@@ -27,7 +27,7 @@ export default async function* (
 			stream_options: { include_usage: true }, // ask OpenAI to send usage at the end
 			messages: [
 				{ role: 'system', content: aiSettings.systemInstruction },
-				...messages.map(m => ({ role: m.role, content: m.content }))
+				...messages.map(m => ({ role: m.role, content: m.content }) as any)
 			]
 		},
 		{ signal }
