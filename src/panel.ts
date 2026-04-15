@@ -33,7 +33,7 @@ declare global {
 	}
 }
 
-const renderPanel = (container: HTMLElement): void => {
+const renderPanel = (container: HTMLElement): () => void => {
 	const getWorkspaceFolders = () =>
 		window.addedFolder?.map(folder => folder.url)
 
@@ -109,19 +109,18 @@ const renderPanel = (container: HTMLElement): void => {
 		el.onwheel = event => event.stopPropagation()
 		el.ontouchmove = event => event.stopPropagation()
 	})
-	let autoScrollEnabled = true
-
-	msgsWrap.addEventListener('scroll', () => {
-		const distanceFromBottom =
-			msgsWrap.scrollHeight - msgsWrap.scrollTop - msgsWrap.clientHeight
-		autoScrollEnabled = distanceFromBottom <= 24
-	})
-
 	let messages: ChatMessage[] = []
 	let ctxFiles: ContextFile[] = []
 	let isStreaming = false
 	let ctxMenuOpen = false
 	let controller: AbortController | null = null
+
+	let userIsScrolling = false
+
+	msgsWrap.addEventListener('touchstart', () => { userIsScrolling = true })
+	msgsWrap.addEventListener('touchend', () => { userIsScrolling = false })
+	container.addEventListener('focus', scrollBottom)
+	msgsWrap.addEventListener('focus', scrollBottom)
 
 	const aiPanelEl = getElement<HTMLElement>(container, '#ai-panel')
 	const ctxMenuEl = createEl('div')
@@ -353,7 +352,7 @@ const renderPanel = (container: HTMLElement): void => {
 		copyBtn?.addEventListener('click', () => copyText(text, copyBtn, doc))
 
 		regenBtn?.addEventListener('click', () => {
-			messages.splice(idx)
+			if (text !== '') messages.splice(idx)
 			renderAll()
 			simulateAIResponse()
 		})
@@ -479,6 +478,7 @@ const renderPanel = (container: HTMLElement): void => {
 		let liveContent: HTMLDivElement | null = null
 		let saveDebounceTimer: NodeJS.Timeout | undefined
 
+		let completeMessage: string = ''
 		let lastHistoryWorkspace: string | undefined
 		let lastActiveFile: string | undefined
 
@@ -518,7 +518,7 @@ const renderPanel = (container: HTMLElement): void => {
 				if (!hasContext) ctx = ''
 				else ctx += '\n\n========= USER PROMPT =========\n'
 
-				//clg('Role', m.role, '\nUser Context', ctx + m.text)
+				clg('Role:', m.role, 'Context:', ctx, 'Text:', m.text)
 
 				return {
 					role: m.role,
@@ -557,6 +557,7 @@ const renderPanel = (container: HTMLElement): void => {
 					// --- STREAMING RESPONSE UPDATE ---
 					if (liveContent && aiIdx !== null) {
 						messages[aiIdx].text += chunk.delta
+						completeMessage += chunk.delta
 
 						liveContent.innerHTML =
 							renderMarkdown(messages[aiIdx].text) +
@@ -568,13 +569,22 @@ const renderPanel = (container: HTMLElement): void => {
 							saveDebounceTimer = setTimeout(() => {
 								void saveChatHistory(messages)
 								saveDebounceTimer = undefined
-							}, 1000)
+							}, 700)
 						}
 					}
 				} else if (chunk.type === 'done') {
 					stopStream(false)
 
 					if (liveContent && aiIdx !== null) {
+						if (chunk.provider === 'qwen') {
+							const cleanedMessage = stripTrailingDetailsBlock(
+								completeMessage || messages[aiIdx].text
+							)
+							messages[aiIdx].text = cleanedMessage
+							completeMessage = cleanedMessage
+							liveContent.innerHTML = renderMarkdown(cleanedMessage)
+						}
+
 						if (saveDebounceTimer) {
 							clearTimeout(saveDebounceTimer)
 							saveDebounceTimer = undefined
@@ -597,13 +607,13 @@ const renderPanel = (container: HTMLElement): void => {
 
 			stopStream(false)
 
+			completeMessage = completeMessage.trim()
+
 			if (!liveContent) liveContent = initializeLiveResponse()
 			if (liveContent)
-				liveContent.innerHTML =
-					liveContent.innerHTML +
-					`<div class="error">${esc(e.message || String(e))}</div>`
+				liveContent.innerHTML += `<div class="error">${esc(e.message || String(e))}</div>`
 		} finally {
-			if (liveContent && aiIdx !== null) {
+			if (liveContent) {
 				const actionBtns = createEl('div')
 				actionBtns.className = 'msg-actions'
 				actionBtns.innerHTML = `
@@ -616,13 +626,13 @@ const renderPanel = (container: HTMLElement): void => {
 						</button>
                </div>
                <span class="msg-model-tag">${esc(
-						messages[aiIdx]?.modelUsed || ''
+						messages[aiIdx ?? -1]?.modelUsed || ''
 					)}</span>
 				`
 
 				liveRow.appendChild(actionBtns)
 
-				addFinishUp(liveRow, aiIdx, messages[aiIdx]?.text)
+				addFinishUp(liveRow, aiIdx ?? -1, completeMessage)
 				scrollBottom()
 			}
 		}
@@ -657,7 +667,6 @@ const renderPanel = (container: HTMLElement): void => {
 			workspaceUsed: getWorkspaceFolders().join(' | '),
 			activeFile: editorManager.activeFile?.uri
 		})
-		autoScrollEnabled = true
 		render()
 
 		void saveChatHistory(messages)
@@ -679,9 +688,25 @@ const renderPanel = (container: HTMLElement): void => {
 			})
 	}
 
-	function scrollBottom(force = false): void {
-		if (!force && !autoScrollEnabled) return
-		autoScrollEnabled = true
+	const stripTrailingDetailsBlock = (text: string): string => {
+		const trimmedEnd = text.replace(/\s+$/g, '')
+		const closeTag = '</details>'
+		const lower = trimmedEnd.toLowerCase()
+		const closeIndex = lower.lastIndexOf(closeTag)
+
+		if (closeIndex < 0 || closeIndex + closeTag.length !== trimmedEnd.length) {
+			return text
+		}
+
+		const openIndex = lower.lastIndexOf('<details', closeIndex)
+		if (openIndex < 0) return text
+
+		return trimmedEnd.slice(0, openIndex).trimEnd()
+	}
+
+	function scrollBottom(): void {
+		if (!userIsScrolling) return
+		alert('scrolling')
 		msgsWrap.scrollTop = msgsWrap.scrollHeight
 	}
 
@@ -710,21 +735,22 @@ const renderPanel = (container: HTMLElement): void => {
 	void retrieveChatHistory().then(history => {
 		messages = history
 		renderAll()
-		scrollBottom(true)
+		scrollBottom()
 	})
 	historyContainer(container, doc, history => {
 		messages = history
 		renderAll()
-		scrollBottom(true)
+		scrollBottom()
 		inputEl.focus()
 	})
 
 	settingsContainer(container, doc)
-	scrollBottom(true)
 	resize()
 	updateCount()
 	renderCtxBar()
 	inputEl.focus()
+
+	return scrollBottom
 }
 
 export { renderPanel }

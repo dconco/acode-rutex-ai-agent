@@ -3,6 +3,7 @@ import { renderPanel } from './panel'
 import { PLUGIN_ID } from './configs/constants'
 
 const sideBarApps = acode.require('sidebarApps')
+let scrollBottom: undefined | (() => void) = undefined
 
 const addIcon = () => {
 	acode.addIcon('ai-agent-icon', Icon)
@@ -11,10 +12,16 @@ const addIcon = () => {
 		'ai-agent-icon',
 		PLUGIN_ID,
 		'Rutex AI Agent',
-		(container: HTMLElement) => renderPanel(container),
+		(container: HTMLElement) => {
+			scrollBottom = renderPanel(container)
+		},
 		false,
 		() => {
 			// Optional: logic to run whenever the sidebar is toggled open
+			if (scrollBottom) {
+				scrollBottom()
+				alert('from sidebar')
+			} else alert('ScrollBottom isn\'t initialize')
 		}
 	)
 }
