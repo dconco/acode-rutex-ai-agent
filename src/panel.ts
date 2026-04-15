@@ -705,7 +705,7 @@ const renderPanel = (container: HTMLElement): () => void => {
 	}
 
 	function scrollBottom(): void {
-		if (!userIsScrolling) return
+		if (userIsScrolling) return
 		alert('scrolling')
 		msgsWrap.scrollTop = msgsWrap.scrollHeight
 	}
