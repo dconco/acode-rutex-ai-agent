@@ -48,7 +48,6 @@ export async function* sendChat(
 ): AsyncGenerator<StreamChunk> {
 	const { provider } = aiSettings
 	const model = aiSettings.models[provider]
-	const apiKey = aiSettings.apiKeys[provider]
 
 	let StreamModel: StreamFunction
 

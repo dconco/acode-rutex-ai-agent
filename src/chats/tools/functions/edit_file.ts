@@ -1,10 +1,5 @@
-interface EditFileInfo {
-   path: string
-	lines: {
-		line: number,
-		text: string,
-	}[]
-}
+import { EditFileInfo } from "./types";
+
 
 export default function({ path, lines }: EditFileInfo) {
 	clg('EDIT_FILE_TRIGGERED:', { path, lines })

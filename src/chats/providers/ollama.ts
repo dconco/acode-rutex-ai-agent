@@ -1,4 +1,5 @@
 import { aiSettings } from '../settings'
+import { ToolsFunction } from '../tools/functions/types'
 import { tools } from '../tools/ollama_tools'
 import { StreamChunk, ChatMessage } from '../types'
 
@@ -119,21 +120,30 @@ export default async function* (
 
 		for (const call of toolCalls) {
 			try {
-				const toolFunction = (
+				const toolFunction: ToolsFunction = (
 					await require(`../tools/functions/${call.function.name}`)
 				).default
-				const { result, toSave } = await toolFunction(call.function.arguments)
 
-				messages.push({
-					role: 'tool',
-					tool_name: call.function.name,
-					content: result
-				})
+				const chunkedResult = toolFunction(call.function.arguments)
 
-				if (toSave) {
-					yield {
-						type: 'tool',
-						delta: toSave
+				for await (const chunk of chunkedResult) {
+					switch (chunk.type) {
+						case 'toSave':
+							yield {
+								type: 'tool',
+								delta: chunk.toSave
+							}
+
+							break
+
+						case 'result':
+							messages.push({
+								role: 'tool',
+								tool_name: call.function.name,
+								content: chunk.result
+							})
+
+							break
 					}
 				}
 			} catch (e: unknown) {
