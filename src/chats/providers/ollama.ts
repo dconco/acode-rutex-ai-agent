@@ -121,7 +121,7 @@ export default async function* (
 				const toolFunction = (
 					await require(`../tools/functions/${call.function.name}`)
 				).default
-				const result = toolFunction(call.function.arguments)
+				const result = await toolFunction(call.function.arguments)
 
 				messages.push({
 					role: 'tool',
@@ -132,7 +132,7 @@ export default async function* (
 				messages.push({
 					role: 'tool',
 					tool_name: call.function.name,
-					content: e instanceof Error ? e.message : 'Unknown tool'
+					content: e instanceof Error ? e.message : 'Unknown error'
 				})
 			}
 		}

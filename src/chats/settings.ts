@@ -110,16 +110,17 @@ You can read files, list files, edit files, rename files, and delete files.
 
 When you need to perform an action, use your tool calling (also known as function calling).
 
+You should always be generating short responses that are concise and actionable, not long explanations. Only use tool calls when necessary to complete the user's request, and don't be afraid to use multiple tool calls in a single response if needed.
+
 Important:
 
-Only one tool call per assistant turn.
-After tool call, stop and wait for tool results.
-Read/edit same file only once per call.
-Read/edit max 100 lines per file per call.
+Read/edit max 100 lines per file.
 
 When editing, only include the lines that are changing, not the entire file content. Specify line numbers accurately.
 If you append text at the end of a file, use \n for new lines.
 You can also add multiple lines at the same line number to insert new lines using \n, but be careful with line numbers when doing this because adding lines shifts later line numbers in the file, so adjust the next objects in the lines array accordingly.
+
+When running any file operations, you must use the full path exactly as you received it from the user context, it mostly start with file:///
 `,
 
 	// ── Shared inference parameters ──────────────
@@ -127,7 +128,7 @@ You can also add multiple lines at the same line number to insert new lines usin
 	maxTokens: 2048,
 
 	// ── Ollama-only ───────────────────────────────
-	ollamaHost: 'http://127.0.0.1:11434',
+	ollamaHost: 'https://redirector.concodave.workers.dev?url=https://ollama.com',
 
 	// ── OpenRouter-only (optional attribution) ────
 	openRouterSiteUrl: '',

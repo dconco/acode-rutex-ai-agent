@@ -1,15 +1,26 @@
+
 interface ListFilesInfo {
 	path: string
 }
 
-export default function ({ path }: ListFilesInfo) {
-	clg('LIST_DIRECTORY_TRIGGERED:', { path })
-	const flist = acode.require('filelist')
-	const entries = flist(path)
+export default async function ({ path }: ListFilesInfo) {
+	try {
+		const fs = acode.require('fs')
+		const entries = await fs(path).lsDir()
 
-	return entries
-		.map(
-			(entry: Acode.Tree) => entry.path + (entry.children.length ? '/' : '')
-		)
-		.join(' | ')
+		if (!entries) {
+			throw new Error('Directory path is invalid or inaccessible.')
+		}
+
+		return entries.map((entry: Acode.File) => {
+			if (entry.url.startsWith(path)) {
+				return entry.url.slice(path.length)
+			}
+
+			return entry.url
+		}).join(' | ')
+
+	} catch (error: any) {
+		return error instanceof Error ? error.message : 'Unknown error occurred while listing directory.'
+	}
 }

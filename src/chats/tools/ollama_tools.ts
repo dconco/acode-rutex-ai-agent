@@ -11,7 +11,7 @@ export const tools = [
             properties: {
                path: {
                   type: "string",
-                  description: "The absolute path to the file",
+                  description: "The full path to the file",
                },
                start_line: {
                   type: "number",
@@ -36,7 +36,7 @@ export const tools = [
             properties: {
                path: {
                   type: "string",
-                  description: "The absolute path to the directory",
+                  description: "The full path to the directory",
                },
             },
          },
@@ -53,7 +53,7 @@ export const tools = [
             properties: {
                path: {
                   type: "string",
-                  description: "The absolute path to the file",
+                  description: "The full path to the file",
                },
                lines: {
                   type: "array",
@@ -89,11 +89,11 @@ export const tools = [
             properties: {
                path: {
                   type: "string",
-                  description: "The absolute path to the file",
+                  description: "The full path to the file",
                },
                new_path: {
                   type: "string",
-                  description: "The new absolute path for the file",
+                  description: "The new full path for the file",
                },
             },
          },
