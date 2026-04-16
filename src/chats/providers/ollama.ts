@@ -19,7 +19,6 @@ export default async function* (
 		headers['Authorization'] = `Bearer ${aiSettings.apiKeys.ollama}`
 	}
 
-	
 	let fullText = ''
 	let chunk: any = null
 
@@ -84,12 +83,15 @@ export default async function* (
 
 						if (chunk.message?.content) {
 							fullText += chunk.message.content
-							yield { type: 'text', delta: chunk.message.content, model: chunk.model ?? model }
+							yield {
+								type: 'text',
+								delta: chunk.message.content,
+								model: chunk.model ?? model
+							}
 						}
 
 						if (chunk.message?.tool_calls?.length) {
 							toolCalls.push(...chunk.message.tool_calls)
-							clg('Tool calls:', chunk.message.tool_calls)
 						}
 					} catch {
 						// incomplete JSON line, skip
@@ -100,7 +102,6 @@ export default async function* (
 			reader.releaseLock()
 		}
 
-
 		// --- Handle any tool calls at the end of the stream ---
 
 		if (!toolCalls.length) {
@@ -108,20 +109,33 @@ export default async function* (
 		}
 
 		if (toolCalls.length) {
-			messages.push({ role: 'assistant', content: fullText, tool_calls: toolCalls })
+			messages.push({
+				role: 'assistant',
+				content: fullText,
+				tool_calls: toolCalls
+			})
 		}
 
 		for (const call of toolCalls) {
 			try {
-				const toolFunction = (await require(`../tools/functions/${call.function.name}`)).default
+				const toolFunction = (
+					await require(`../tools/functions/${call.function.name}`)
+				).default
 				const result = toolFunction(call.function.arguments)
-				messages.push({ role: 'tool', tool_name: call.function.name, content: result })
+
+				messages.push({
+					role: 'tool',
+					tool_name: call.function.name,
+					content: result
+				})
 			} catch (e: unknown) {
-				messages.push({ role: 'tool', tool_name: call.function.name, content: e instanceof Error ? e.message : 'Unknown tool' } )
+				messages.push({
+					role: 'tool',
+					tool_name: call.function.name,
+					content: e instanceof Error ? e.message : 'Unknown tool'
+				})
 			}
 		}
-
-		toolCalls = []
 	}
 
 	yield {
@@ -132,8 +146,7 @@ export default async function* (
 		usage: {
 			inputTokens: chunk?.prompt_eval_count ?? 0,
 			outputTokens: chunk?.eval_count ?? 0,
-			totalTokens:
-				(chunk?.prompt_eval_count ?? 0) + (chunk?.eval_count ?? 0)
+			totalTokens: (chunk?.prompt_eval_count ?? 0) + (chunk?.eval_count ?? 0)
 		}
 	}
 }

@@ -28,7 +28,7 @@ export const tools = [
    {
       type: "function",
       function: {
-         name: "list_files",
+         name: "list_dir",
          description: "List all files in a directory.",
          parameters: {
             type: "object",
