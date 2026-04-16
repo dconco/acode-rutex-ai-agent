@@ -28,7 +28,7 @@ import {
 	aiSettings,
 	formatTokenNumber
 } from './chats/settings'
-import { processToolCallsInText } from './panel/commandParser'
+import { processSingleToolCallTag } from './panel/commandParser'
 
 declare global {
 	interface Window {
@@ -562,7 +562,7 @@ const renderPanel = (container: HTMLElement): () => void => {
 						messages[aiIdx].text += chunk.delta
 						completeMessage += chunk.delta
 
-						if (chunk.type === 'tool') liveContent.innerHTML += processToolCallsInText(chunk.delta)
+						if (chunk.type === 'tool') liveContent.innerHTML += processSingleToolCallTag(chunk.delta)
 						else liveContent.innerHTML = renderMarkdown(messages[aiIdx].text) + '<span class="stream-cursor"></span>'
 
 						attachCodeButtons(liveContent)

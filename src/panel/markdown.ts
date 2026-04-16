@@ -10,6 +10,9 @@ import python from 'highlight.js/lib/languages/python'
 import typescript from 'highlight.js/lib/languages/typescript'
 import xml from 'highlight.js/lib/languages/xml'
 import { escapeHtml } from './utils'
+import { processSingleToolCallTag } from './commandParser'
+
+const TOOL_TAG_REGEX = /<tool_calling>[\s\S]*?<\/tool_calling>/gi
 
 hljs.registerLanguage('bash', bash as any)
 hljs.registerLanguage('sh', bash as any)
@@ -126,6 +129,32 @@ const renderMarkdownBlock = (block: string): string => {
 	return output.join('')
 }
 
+const renderMarkdownBlockWithToolCalls = (block: string): string => {
+	const matches = [...block.matchAll(TOOL_TAG_REGEX)]
+	if (!matches.length) return renderMarkdownBlock(block)
+
+	let out = ''
+	let lastIndex = 0
+
+	for (const match of matches) {
+		const fullMatch = match[0]
+		const start = match.index ?? 0
+		const end = start + fullMatch.length
+
+		const before = block.slice(lastIndex, start)
+		if (before) out += renderMarkdownBlock(before)
+
+		// Keep tool payload unescaped and replace tag with generated HTML.
+		out += processSingleToolCallTag(fullMatch)
+		lastIndex = end
+	}
+
+	const tail = block.slice(lastIndex)
+	if (tail) out += renderMarkdownBlock(tail)
+
+	return out
+}
+
 export const renderMarkdown = (raw: string): string => {
 	const parts: string[] = []
 	const fenceRegex = /```(\w*)\n([\s\S]*?)```/g
@@ -135,7 +164,7 @@ export const renderMarkdown = (raw: string): string => {
 	while ((match = fenceRegex.exec(raw)) !== null) {
 		const before = raw.slice(lastIndex, match.index)
 		if (before.trim()) {
-			parts.push(renderMarkdownBlock(before))
+			parts.push(renderMarkdownBlockWithToolCalls(before))
 		}
 
 		const language = normalizeLanguage(match[1] || 'code')
@@ -167,7 +196,7 @@ export const renderMarkdown = (raw: string): string => {
 
 	const tail = raw.slice(lastIndex)
 	if (tail.trim()) {
-		parts.push(renderMarkdownBlock(tail))
+		parts.push(renderMarkdownBlockWithToolCalls(tail))
 	}
 
 	return parts.join('')

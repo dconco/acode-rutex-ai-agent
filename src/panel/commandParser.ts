@@ -2,6 +2,19 @@ import { escapeHtml } from "./utils";
 
 const TOOL_TAG_REGEX = /<tool_calling>([\s\S]*?)<\/tool_calling>/gi;
 
+export function processSingleToolCallTag(tagText: string): string {
+   const match = /<tool_calling>([\s\S]*?)<\/tool_calling>/i.exec(tagText);
+   if (!match) return tagText;
+
+   const payload = (match[1] || "").trim();
+   try {
+      const parsedCommand = JSON.parse(payload);
+      return convertToolCallsToHTML(parsedCommand);
+   } catch {
+      return escapeHtml(tagText);
+   }
+}
+
 export function processToolCallsInText(text: string): string {
    const matches = [...text.matchAll(TOOL_TAG_REGEX)];
    if (!matches.length) return text;
@@ -11,7 +24,6 @@ export function processToolCallsInText(text: string): string {
 
    for (const match of matches) {
       const fullMatch = match[0];
-      const payload = (match[1] || "").trim();
       const start = match.index ?? 0;
       const end = start + fullMatch.length;
 
@@ -19,13 +31,7 @@ export function processToolCallsInText(text: string): string {
       out += text.slice(lastIndex, start);
 
       // Replace this tag with command result
-      let result = "";
-      try {
-         const parsedCommand = JSON.parse(payload);
-         result = convertToolCallsToHTML(parsedCommand);
-      } catch (e) {
-         result = escapeHtml(fullMatch);
-      }
+      const result = processSingleToolCallTag(fullMatch);
       out += result;
 
       lastIndex = end;
