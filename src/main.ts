@@ -1,7 +1,6 @@
 import {
 	PluginSettings,
 	setPluginSetting,
-	getPluginSettings,
 	loadSavedKeys
 } from './helpers/pluginSettings'
 import { addIcon, removeIcon } from './sidebar'
@@ -75,10 +74,10 @@ if (window.acode) {
 		PLUGIN_ID,
 		async (
 			baseUrl: string,
-			$page: Acode.WCPage,
-			options: Acode.PluginInitOptions
+			_$page: Acode.WCPage,
+			_options: Acode.PluginInitOptions
 		) => {
-			const { cacheFile, cacheFileUrl } = options
+			// const { cacheFile, cacheFileUrl } = options
 
 			if (!baseUrl.endsWith('/')) {
 				baseUrl += '/'

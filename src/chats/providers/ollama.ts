@@ -143,6 +143,8 @@ export default async function* (
 								content: chunk.result
 							})
 
+							clg(chunk.result)
+
 							break
 					}
 				}

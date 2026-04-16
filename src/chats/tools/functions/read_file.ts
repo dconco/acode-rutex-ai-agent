@@ -34,7 +34,7 @@ export default async function* ({ path, start_line, end_line }: ReadFileInfo): A
 
       const lines = content.split("\n")
 
-      const result = lines.slice(start_line - 1, end_line).join("\n")
+      const result = lines.slice(start_line - 1, end_line).map((line, index) => `${start_line + index}: ${line}`).join("\n")
 
 		yield { type: 'result', result }
 
