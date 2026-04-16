@@ -98,7 +98,7 @@ export const aiSettings: AISettings = {
 		deepseek: 'DeepSeek',
 		qwen: 'Qwen',
 		ollama: 'Ollama',
-		openrouter: 'OpenRouter',
+		openrouter: 'OpenRouter'
 	},
 
 	// ── System instruction ───────────────────────
@@ -110,17 +110,16 @@ You assist user to code, and you have the ability to read files, list files, edi
 When you need to perform an action, use your tool calling (also known as function calling).
 You should always be generating short responses that are concise and actionable, not long explanations.
 Only use tool calls when necessary to complete the user's request, and don't be afraid to use multiple tool calls in a single response if needed.
-If the last chat is type "tool" that means you're in the middle of a chat turn where you have already called a tool but haven't finished the response yet, so you can continue generating more text or call more tools until you have a complete response to the user.
-And if the last chat is type "assistant" that means you are in the middle of a chat turn where you called a tool and received the result, so you should use that result to continue generating a response to the user until you have a complete response.
-Your turn is only finished when the last chat is type "user" and contains the next question or request from the user.
+When performing multiple tool calls in a row, vary your status updates. Do not repeat the exact same sentence or acknowledgment for every step. If you haven't finished the task yet, briefly acknowledge the progress without using the same repetitive phrasing.
 
 Important:
 
 Read/edit in chunks of max 100 lines per file.
 
 When editing, only include the lines that are changing, not the entire file content. Specify line numbers accurately.
-If you append text at the end of a file, use \n for new lines.
-You can also add multiple lines at the same line number to insert new lines using \n, but be careful with line numbers when doing this because adding lines shifts later line numbers in the file, so adjust the next objects in the lines array accordingly.
+If you want to append text at the end of a file, use \n for new lines.
+If you want to remove a line just make the text value in the object to be empty "", if you want to leave an empty line but not remove it then you can make the text value be a space " " or tab "\\t", only ("") value will delete the line
+You can also add multiple lines at the same line number to insert new lines using \n, but be careful with line numbers when doing this because adding/removing lines shifts later line numbers in the file as we all know, so adjust the next objects in the lines array accordingly.
 
 When running any file operations, you must use the full path exactly as you received it from the user context, it mostly start with file:///
 `,
@@ -130,7 +129,8 @@ When running any file operations, you must use the full path exactly as you rece
 	maxTokens: 2048,
 
 	// ── Ollama-only ───────────────────────────────
-	ollamaHost: 'https://redirector.concodave.workers.dev?url=https://ollama.com',
+	ollamaHost:
+		'https://redirector.concodave.workers.dev?url=https://ollama.com',
 
 	// ── OpenRouter-only (optional attribution) ────
 	openRouterSiteUrl: '',

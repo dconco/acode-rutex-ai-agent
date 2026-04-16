@@ -37,8 +37,7 @@ declare global {
 	}
 }
 
-const renderPanel = (container: HTMLElement): () => void => {
-
+const renderPanel = (container: HTMLElement): (() => void) => {
 	container.style.padding = '0'
 	container.innerHTML = panel
 
@@ -86,8 +85,12 @@ const renderPanel = (container: HTMLElement): () => void => {
 
 	let userIsScrolling = false
 
-	msgsWrap.addEventListener('touchstart', () => { userIsScrolling = true })
-	msgsWrap.addEventListener('touchend', () => { userIsScrolling = false })
+	msgsWrap.addEventListener('touchstart', () => {
+		userIsScrolling = true
+	})
+	msgsWrap.addEventListener('touchend', () => {
+		userIsScrolling = false
+	})
 	container.addEventListener('focus', scrollBottom)
 	msgsWrap.addEventListener('focus', scrollBottom)
 
@@ -318,7 +321,9 @@ const renderPanel = (container: HTMLElement): () => void => {
 
 		attachCodeButtons(aiContent)
 
-		copyBtn?.addEventListener('click', () => copyText(text, copyBtn, doc.document))
+		copyBtn?.addEventListener('click', () =>
+			copyText(text, copyBtn, doc.document)
+		)
 
 		regenBtn?.addEventListener('click', () => {
 			if (text !== '') messages.splice(idx)
@@ -453,7 +458,8 @@ const renderPanel = (container: HTMLElement): () => void => {
 
 		// --- Prepare messages with user context for AI ---
 		// --- Filter away user messages that the next message isn't from AI, to avoid sending irrelevant messages in the history ---
-		const messagesForAI = messages.slice(-20)
+		const messagesForAI = messages
+			.slice(-20)
 			.filter((m, index, arr) => {
 				if (m.role === 'assistant') return true
 				if (m.role === 'user') {
@@ -528,8 +534,15 @@ const renderPanel = (container: HTMLElement): () => void => {
 						messages[aiIdx].text += chunk.delta
 						completeMessage += chunk.delta
 
-						if (chunk.type === 'tool') liveContent.innerHTML += processSingleToolCallTag(chunk.delta)
-						else liveContent.innerHTML = renderMarkdown(messages[aiIdx].text) + '<span class="stream-cursor"></span>'
+						if (chunk.type === 'tool') {
+							liveContent.querySelector('.stream-cursor')?.remove()
+							liveContent.innerHTML +=
+								processSingleToolCallTag(chunk.delta) +
+								'<span class="stream-cursor"></span>'
+						} else
+							liveContent.innerHTML =
+								renderMarkdown(messages[aiIdx].text) +
+								'<span class="stream-cursor"></span>'
 
 						attachCodeButtons(liveContent)
 						scrollBottom()
@@ -580,7 +593,9 @@ const renderPanel = (container: HTMLElement): () => void => {
 
 			if (!liveContent) liveContent = initializeLiveResponse()
 			if (liveContent)
-				liveContent.innerHTML += `<div class="error">${escapeHtml(e.message || String(e))}</div>`
+				liveContent.innerHTML += `<div class="error">${escapeHtml(
+					e.message || String(e)
+				)}</div>`
 		} finally {
 			if (liveContent) {
 				const actionBtns = createEl('div')
