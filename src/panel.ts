@@ -9,6 +9,7 @@ import type { AIPanelAPI, ChatMessage, ContextFile } from './panel/types'
 import {
 	decodeBase64Safe,
 	escapeHtml,
+	doc,
 	getElement,
 	copyText,
 	stripTrailingDetailsBlock
@@ -27,6 +28,7 @@ import {
 	aiSettings,
 	formatTokenNumber
 } from './chats/settings'
+import { processToolCallsInText } from './panel/commandParser'
 
 declare global {
 	interface Window {
@@ -74,11 +76,11 @@ const renderPanel = (container: HTMLElement): () => void => {
 	container.style.padding = '0'
 	container.innerHTML = panel
 
-	const doc = container.ownerDocument || document
+	doc.document = container.ownerDocument || document
+
 	const createEl = <T extends keyof HTMLElementTagNameMap>(
 		tag: T
-	): HTMLElementTagNameMap[T] => doc.createElement(tag)
-	const esc = (value: string): string => escapeHtml(doc, value)
+	): HTMLElementTagNameMap[T] => doc.document.createElement(tag)
 
 	container.style.display = 'flex'
 	container.style.flexDirection = 'column'
@@ -237,7 +239,7 @@ const renderPanel = (container: HTMLElement): () => void => {
 			chip.className = 'ctx-chip'
 			chip.innerHTML = `
      <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-     <span class="ctx-chip-name">${esc(file.previewName)}</span>
+     <span class="ctx-chip-name">${escapeHtml(file.previewName)}</span>
      <button class="ctx-remove" title="Remove">
        <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
      </button>`
@@ -350,7 +352,7 @@ const renderPanel = (container: HTMLElement): () => void => {
 
 		attachCodeButtons(aiContent)
 
-		copyBtn?.addEventListener('click', () => copyText(text, copyBtn, doc))
+		copyBtn?.addEventListener('click', () => copyText(text, copyBtn, doc.document))
 
 		regenBtn?.addEventListener('click', () => {
 			if (text !== '') messages.splice(idx)
@@ -374,12 +376,12 @@ const renderPanel = (container: HTMLElement): () => void => {
 					${
 						msg.ctxName?.map(
 							ctx =>
-								`<div class="user-ctx-chip"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>${esc(
+								`<div class="user-ctx-chip"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>${escapeHtml(
 									ctx
 								)}</div>`
 						) ?? ''
 					}
-					${esc(msg.text).replace(/ /g, '&nbsp;').replace(/\n/g, '<br>')}
+					${escapeHtml(msg.text)}
 				</div>
 				<div class="msg-actions">
 					<button class="act-btn copy-btn" title="Copy">
@@ -422,7 +424,7 @@ const renderPanel = (container: HTMLElement): () => void => {
 				</div>
 				<div class="ai-content">
 					${renderMarkdown(msg.text)}
-					${renderEditedFileLines(editedFiles, esc, 'index.php')}
+					${renderEditedFileLines(editedFiles, 'index.php')}
 				</div>
 				<div class="msg-actions">
 					<div class="msg-action-group">
@@ -433,7 +435,7 @@ const renderPanel = (container: HTMLElement): () => void => {
 							<svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.5 15a9 9 0 1 1-2.7-6.7L23 10"/></svg> retry
 						</button>
 					</div>
-					<span class="msg-model-tag">${esc(msg.modelUsed || '')}</span>
+					<span class="msg-model-tag">${escapeHtml(msg.modelUsed || '')}</span>
 				</div>`
 
 			addFinishUp(row, idx, msg.text)
@@ -543,7 +545,7 @@ const renderPanel = (container: HTMLElement): () => void => {
 
 		try {
 			for await (const chunk of sendChat(messagesForAI, controller.signal)) {
-				if (chunk.type === 'text') {
+				if (chunk.type === 'text' || chunk.type === 'tool') {
 					// --- INITIAL AI RESPONSE HTML ---
 					if (!liveContent || aiIdx === null) {
 						liveContent = initializeLiveResponse()
@@ -560,9 +562,9 @@ const renderPanel = (container: HTMLElement): () => void => {
 						messages[aiIdx].text += chunk.delta
 						completeMessage += chunk.delta
 
-						liveContent.innerHTML =
-							renderMarkdown(messages[aiIdx].text) +
-							'<span class="stream-cursor"></span>'
+						if (chunk.type === 'tool') liveContent.innerHTML += processToolCallsInText(chunk.delta)
+						else liveContent.innerHTML = renderMarkdown(messages[aiIdx].text) + '<span class="stream-cursor"></span>'
+
 						attachCodeButtons(liveContent)
 						scrollBottom()
 
@@ -612,7 +614,7 @@ const renderPanel = (container: HTMLElement): () => void => {
 
 			if (!liveContent) liveContent = initializeLiveResponse()
 			if (liveContent)
-				liveContent.innerHTML += `<div class="error">${esc(e.message || String(e))}</div>`
+				liveContent.innerHTML += `<div class="error">${escapeHtml(e.message || String(e))}</div>`
 		} finally {
 			if (liveContent) {
 				const actionBtns = createEl('div')
@@ -626,7 +628,7 @@ const renderPanel = (container: HTMLElement): () => void => {
 							<svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.5 15a9 9 0 1 1-2.7-6.7L23 10"/></svg> retry
 						</button>
                </div>
-               <span class="msg-model-tag">${esc(
+               <span class="msg-model-tag">${escapeHtml(
 						messages[aiIdx ?? -1]?.modelUsed || ''
 					)}</span>
 				`
@@ -694,7 +696,7 @@ const renderPanel = (container: HTMLElement): () => void => {
 		msgsWrap.scrollTop = msgsWrap.scrollHeight
 	}
 
-	doc.addEventListener(
+	doc.document.addEventListener(
 		'click',
 		event => {
 			if (!ctxMenuOpen) return
@@ -721,14 +723,14 @@ const renderPanel = (container: HTMLElement): () => void => {
 		renderAll()
 		scrollBottom()
 	})
-	historyContainer(container, doc, history => {
+	historyContainer(container, doc.document, history => {
 		messages = history
 		renderAll()
 		scrollBottom()
 		inputEl.focus()
 	})
 
-	settingsContainer(container, doc)
+	settingsContainer(container, doc.document)
 	resize()
 	updateCount()
 	renderCtxBar()

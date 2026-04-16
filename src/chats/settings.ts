@@ -114,7 +114,7 @@ You should always be generating short responses that are concise and actionable,
 
 Important:
 
-Read/edit max 100 lines per file.
+Read/edit in chunks of max 100 lines per file.
 
 When editing, only include the lines that are changing, not the entire file content. Specify line numbers accurately.
 If you append text at the end of a file, use \n for new lines.

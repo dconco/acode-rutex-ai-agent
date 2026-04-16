@@ -1,3 +1,4 @@
+
 import hljs from 'highlight.js/lib/core'
 import bash from 'highlight.js/lib/languages/bash'
 import css from 'highlight.js/lib/languages/css'
@@ -8,6 +9,7 @@ import php from 'highlight.js/lib/languages/php'
 import python from 'highlight.js/lib/languages/python'
 import typescript from 'highlight.js/lib/languages/typescript'
 import xml from 'highlight.js/lib/languages/xml'
+import { escapeHtml } from './utils'
 
 hljs.registerLanguage('bash', bash as any)
 hljs.registerLanguage('sh', bash as any)
@@ -26,13 +28,17 @@ hljs.registerLanguage('typescript', typescript as any)
 hljs.registerLanguage('html', xml as any)
 hljs.registerLanguage('xml', xml as any)
 
-const escapeHtml = (value: string): string =>
-	value
-		.replace(/&/g, '&amp;')
-		.replace(/</g, '&lt;')
-		.replace(/>/g, '&gt;')
-		.replace(/"/g, '&quot;')
-		.replace(/'/g, '&#39;')
+const escapeHtml2 = (value: string): string => {
+  const map: Record<string, string> = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;',
+    '`': '&#96;'
+  }
+  return value.replace(/[&<>"'`]/g, char => map[char])
+}
 
 const normalizeLanguage = (lang: string): string => {
 	const lower = lang.trim().toLowerCase()
@@ -46,7 +52,7 @@ const normalizeLanguage = (lang: string): string => {
 }
 
 const renderInlineMarkdown = (text: string): string => {
-	let h = escapeHtml(text)
+	let h = escapeHtml2(text)
 	h = h.replace(/`([^`\n]+)`/g, '<code>$1</code>')
 	h = h.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
 	h = h.replace(/\*(.+?)\*/g, '<em>$1</em>')
@@ -142,13 +148,13 @@ export const renderMarkdown = (raw: string): string => {
 				? hljs.highlight(code, { language }).value
 				: hljs.highlightAuto(code).value
 		} catch {
-			highlighted = escapeHtml(code)
+			highlighted = escapeHtml2(code)
 		}
 
 		parts.push(`
          <div class="code-block">
             <div class="code-header">
-               <span class="code-lang">${escapeHtml(language)}</span>
+               <span class="code-lang">${escapeHtml2(language)}</span>
                <button class="code-btn copy-code-btn" data-enc="${encoded}">
                   <svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>copy
                </button>
@@ -175,17 +181,48 @@ export type EditedFileLines = Array<{
 
 export const renderEditedFileLines = (
 	lines: EditedFileLines,
-	escapeHtml: (value: string) => string,
 	editedFilePath = ''
 ): string => {
-	const entries = lines.sort((a, b) => {
-   	// First sort by line number (ascending)
-   	if (a.line !== b.line) {
-   		return a.line - b.line
-   	}
-   	// If same line number, removed lines (isAdded: false) come before added lines (isAdded: true)
-   	return (a.isAdded ? 1 : 0) - (b.isAdded ? 1 : 0)
-   })
+	const byLine = [...lines].sort((a, b) => a.line - b.line)
+
+	const groups = new Map<number, EditedFileLines>()
+	for (const entry of byLine) {
+		if (!groups.has(entry.line)) groups.set(entry.line, [])
+		groups.get(entry.line)!.push(entry)
+	}
+
+	const uniqueLines = [...groups.keys()].sort((a, b) => a - b)
+	const entries: EditedFileLines = []
+
+	for (let i = 0; i < uniqueLines.length; ) {
+		const start = i
+		while (
+			i + 1 < uniqueLines.length &&
+			uniqueLines[i + 1] === uniqueLines[i] + 1
+		) {
+			i++
+		}
+
+		const blockLines = uniqueLines.slice(start, i + 1)
+
+		// For consecutive line blocks, show removals first then additions.
+		if (blockLines.length > 1) {
+			for (const line of blockLines) {
+				for (const entry of groups.get(line) || []) {
+					if (!entry.isAdded) entries.push(entry)
+				}
+			}
+			for (const line of blockLines) {
+				for (const entry of groups.get(line) || []) {
+					if (entry.isAdded) entries.push(entry)
+				}
+			}
+		} else {
+			entries.push(...(groups.get(blockLines[0]) || []))
+		}
+
+		i++
+	}
 
 	const rows = entries
 		.map(entry =>

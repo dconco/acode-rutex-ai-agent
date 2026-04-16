@@ -31,7 +31,7 @@ export interface Usage {
  * - { type: "done" }  — stream finished, contains full text + usage stats
  */
 export type StreamChunk =
-	| { type: 'text'; delta: string; model?: string }
+	| { type: 'text' | 'tool'; delta: string; model?: string }
 	| {
 			type: 'done'
 			text: string

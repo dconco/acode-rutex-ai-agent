@@ -1,7 +1,12 @@
-export const escapeHtml = (doc: Document, value: string): string => {
-	const pre = doc.createElement('pre')
+export const doc: { document: Document } = {
+	document: document
+}
+
+export const escapeHtml = (value: string): string => {
+	const pre = doc.document.createElement('pre')
 	pre.textContent = value
 	return pre.innerHTML
+	//.replace(/ /g, '&nbsp;').replace(/\n/g, '<br>')
 }
 
 export const decodeBase64Safe = (value: string): string => {

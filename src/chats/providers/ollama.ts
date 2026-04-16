@@ -36,7 +36,8 @@ export default async function* (
 			},
 			tools
 		})
-		clg('Chat History', messages)
+
+	
 
 		let response: Response
 		try {
@@ -121,13 +122,20 @@ export default async function* (
 				const toolFunction = (
 					await require(`../tools/functions/${call.function.name}`)
 				).default
-				const result = await toolFunction(call.function.arguments)
+				const { result, toSave } = await toolFunction(call.function.arguments)
 
 				messages.push({
 					role: 'tool',
 					tool_name: call.function.name,
 					content: result
 				})
+
+				if (toSave) {
+					yield {
+						type: 'tool',
+						delta: toSave
+					}
+				}
 			} catch (e: unknown) {
 				messages.push({
 					role: 'tool',
