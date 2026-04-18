@@ -1,5 +1,5 @@
 import { CreateFileInfo } from "./types";
-import { getRelativePath, refreshFolder } from "./utils";
+import { getRelativePath } from "./utils";
 
 export default async function* ({ path, content = '' }: CreateFileInfo) {
 
@@ -30,8 +30,6 @@ export default async function* ({ path, content = '' }: CreateFileInfo) {
 	const result = await fs(dirPath).createFile(filename, content)
 
 	acode.newEditorFile(filename, { render: true, uri: path })
-
-	refreshFolder(dirPath)
 
 	yield { result, toSave }
 }

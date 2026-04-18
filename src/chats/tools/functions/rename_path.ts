@@ -1,5 +1,5 @@
 import { RenameFileInfo } from "./types";
-import { getRelativePath, refreshFolder } from "./utils";
+import { getRelativePath } from "./utils";
 
 export default async function* ({ path, new_name }: RenameFileInfo) {
 	
@@ -21,8 +21,6 @@ export default async function* ({ path, new_name }: RenameFileInfo) {
 		}
 	
 		const result = await fs(path).renameTo(new_name)
-
-		refreshFolder(path)
 
 		yield { result, toSave }
 }

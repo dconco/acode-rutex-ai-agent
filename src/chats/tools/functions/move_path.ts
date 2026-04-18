@@ -1,5 +1,5 @@
 import { MoveFileInfo } from "./types";
-import { getRelativePath, refreshFolder } from "./utils";
+import { getRelativePath } from "./utils";
 
 export default async function* ({ path, new_path }: MoveFileInfo) {
 
@@ -22,8 +22,6 @@ export default async function* ({ path, new_path }: MoveFileInfo) {
 	}
 
 	const result = await fs(path).moveTo(new_path)
-
-	refreshFolder(path)
 
 	yield { result, toSave }
 }

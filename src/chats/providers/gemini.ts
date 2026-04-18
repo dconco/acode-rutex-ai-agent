@@ -15,43 +15,24 @@ export default async function* (
 ): AsyncGenerator<StreamChunk> {
 	const ai = new GoogleGenAI({ apiKey: aiSettings.apiKeys.gemini })
 
-	const contents: any[] = messages.map(m => {
+	// Mirror Ollama flow: incoming messages are plain history; tool state is built
+	// only inside this provider execution loop.
+	const turnMessages: ChatMessage[] = messages.map(m => ({
+		role: m.role,
+		content: m.content
+	}))
+
+	const contents: any[] = turnMessages
+		.filter(m => m.role === 'user' || m.role === 'assistant')
+		.map(m => {
 		if (m.role === 'assistant') {
-			const parts: any[] = []
-			if (m.content) parts.push({ text: m.content })
-
-			if (m.tool_calls?.length) {
-				for (const tc of m.tool_calls) {
-					if (!tc?.function?.name) continue
-					parts.push({
-						functionCall: {
-							id: tc.id,
-							name: tc.function.name,
-							args: tc.function.arguments ?? {}
-						}
-					})
-				}
-			}
-
-			return { role: 'model', parts: parts.length ? parts : [{ text: '' }] }
-		}
-
-		if (m.role === 'tool') {
-			return {
-				role: 'user',
-				parts: [
-					{
-						functionResponse: {
-							name: m.tool_name || 'unknown_tool',
-							response: { result: m.content }
-						}
-					}
-				]
-			}
+			// Keep historical assistant turns as text-only. Function call parts from
+			// prior turns can carry thought signatures that are not available here.
+			return { role: 'model', parts: [{ text: m.content || '' }] }
 		}
 
 		return { role: 'user', parts: [{ text: m.content }] }
-	})
+		})
 
 	const functionDeclarations = ollamaTools.map(tool => ({
 		name: tool.function.name,
@@ -81,9 +62,15 @@ export default async function* (
 		const toolCalls: any[] = []
 		const seenToolCallIds = new Set<string>()
 		let turnText = ''
+		let lastModelContent: any = null
 
 		for await (const chunk of stream) {
 			if (signal?.aborted) break
+
+			const candidateContent = (chunk as any)?.candidates?.[0]?.content
+			if (candidateContent?.parts?.length) {
+				lastModelContent = candidateContent
+			}
 
 			const functionCalls = (chunk as any).functionCalls as any[] | undefined
 			if (functionCalls?.length) {
@@ -99,7 +86,7 @@ export default async function* (
 			if (delta) {
 				turnText += delta
 				fullText += delta
-				yield { type: 'text', delta, model }
+				yield { type: 'text', delta, model: chunk.modelVersion || model }
 			}
 
 			const meta = (
@@ -123,23 +110,33 @@ export default async function* (
 
 		if (!toolCalls.length) break
 
-		const modelParts: any[] = []
-		if (turnText) modelParts.push({ text: turnText })
+		turnMessages.push({
+			role: 'assistant',
+			content: turnText,
+			tool_calls: toolCalls
+		})
 
-		for (const call of toolCalls) {
-			modelParts.push({
-				functionCall: {
-					id: call.id,
-					name: call.name,
-					args: call.args ?? {}
-				}
+		// Reuse the model-emitted content so functionCall thought signatures are preserved.
+		if (lastModelContent?.parts?.length) {
+			contents.push(lastModelContent)
+		} else {
+			const fallbackParts: any[] = []
+			if (turnText) fallbackParts.push({ text: turnText })
+			for (const call of toolCalls) {
+				fallbackParts.push({
+					functionCall: {
+						id: call.id,
+						name: call.name,
+						args: call.args ?? {}
+					}
+				})
+			}
+
+			contents.push({
+				role: 'model',
+				parts: fallbackParts.length ? fallbackParts : [{ text: '' }]
 			})
 		}
-
-		contents.push({
-			role: 'model',
-			parts: modelParts.length ? modelParts : [{ text: '' }]
-		})
 
 		const functionResponses: any[] = []
 
@@ -158,7 +155,7 @@ export default async function* (
 
 				for await (const toolChunk of chunkedResult) {
 					if (toolChunk.toSave) {
-						yield { type: 'tool', delta: toolChunk.toSave }
+						yield { type: 'tool', delta: toolChunk.toSave, model }
 					}
 
 					if (toolChunk.result) {
@@ -172,6 +169,12 @@ export default async function* (
 					name: call.name,
 					response: { result: resultContent || '[NO RESULT]' }
 				})
+
+				turnMessages.push({
+					role: 'tool',
+					tool_name: call.name,
+					content: resultContent || '[NO RESULT]'
+				})
 			} catch (e: any) {
 				const errorMessage = e instanceof Error ? e.message : 'Unknown error'
 				clg(errorMessage)
@@ -180,6 +183,12 @@ export default async function* (
 					id: call.id,
 					name: call.name,
 					response: { result: `[ERROR] ${errorMessage}` }
+				})
+
+				turnMessages.push({
+					role: 'tool',
+					tool_name: call.name,
+					content: `[ERROR] ${errorMessage}`
 				})
 			}
 		}

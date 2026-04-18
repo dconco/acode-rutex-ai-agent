@@ -1,5 +1,5 @@
 import { CreateDirInfo } from "./types";
-import { getRelativePath, refreshFolder } from "./utils";
+import { getRelativePath } from "./utils";
 
 export default async function* ({ path }: CreateDirInfo) {
 
@@ -28,8 +28,6 @@ export default async function* ({ path }: CreateDirInfo) {
 	if (!dirExists) throw new Error('Parent directory path does not exist.')
 
 	const result = await fs(parentDir).createDirectory(dirName)
-
-	refreshFolder(parentDir)
 
 	yield { result, toSave }
 }
