@@ -483,17 +483,20 @@ const renderPanel = (container: HTMLElement): (() => void) => {
 
 					// --- STREAMING RESPONSE UPDATE ---
 					if (liveContent && aiIdx !== null) {
-						messages[aiIdx].text += chunk.delta
+						const message = messages[aiIdx]
+
+						message.text += chunk.delta
 						completeMessage += chunk.delta
 
 						if (chunk.type === 'tool') {
+							const { html, editMsgHistoryId } = await processSingleToolCallTag(chunk.delta)
+							message.editedFileHistoryIds = [...(message.editedFileHistoryIds || []), editMsgHistoryId]
+
 							liveContent.querySelector('.stream-cursor')?.remove()
-							liveContent.innerHTML +=
-								(await processSingleToolCallTag(chunk.delta)) +
-								'<span class="stream-cursor"></span>'
+							liveContent.innerHTML += html + '<span class="stream-cursor"></span>'
 						} else
 							liveContent.innerHTML =
-								(await renderMarkdown(messages[aiIdx].text)) +
+								(await renderMarkdown(message.text)) +
 								'<span class="stream-cursor"></span>'
 
 						attachCodeButtons(liveContent)

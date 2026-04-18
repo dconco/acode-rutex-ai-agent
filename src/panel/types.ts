@@ -6,6 +6,7 @@ export interface ChatMessage {
 	modelUsed?: string
 	workspaceUsed?: string
 	activeFile?: string
+	editedFileHistoryIds?: string[]
 }
 
 export interface ContextFile {
