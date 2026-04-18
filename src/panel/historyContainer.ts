@@ -64,8 +64,7 @@ export const historyContainer = (
 			})
 
 			deleteBtn?.addEventListener('click', async () => {
-				const confirm = acode.require('confirm')
-				const res = await confirm(
+				const res = await acode.confirm(
 					'Are you sure?',
 					'This will delete this message history forever!'
 				)

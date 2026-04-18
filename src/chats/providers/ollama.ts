@@ -151,20 +151,20 @@ export default async function* (
 						messages.push({
 							role: 'tool',
 							tool_name: call.function.name,
-							content: chunk.result
+							content: chunk.result || '[NO RESULT]'
 						})
 
 						break
 					}
 				}
 			} catch (e: any) {
-				clg(e instanceof Error ? e.message : 'Unknown error')
+				const errorMessage = e instanceof Error ? e.message : 'Unknown error'
+				clg(errorMessage)
+
 				messages.push({
 					role: 'tool',
 					tool_name: call.function.name,
-					content:
-						'[ERROR] ' +
-						(e instanceof Error ? e.message : 'Unknown error')
+					content: '[ERROR] ' + errorMessage
 				})
 			}
 		}

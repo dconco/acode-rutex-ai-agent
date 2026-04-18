@@ -6,37 +6,34 @@ export default async function* ({
 	start_line,
 	end_line
 }: ReadFileInfo): AsyncGenerator<ToolsReturnType> {
-	try {
-		// --- SEND SIGNAL TO PANEL THAT FILE IS BEING READ ---
-		const relativePath = getRelativePath(path)
 
-		const toolCalling = JSON.stringify({
-			header: `READ: ${relativePath}:${start_line}-${end_line}`
-		})
-		const toSave = `<tool_calling_used>${toolCalling}</tool_calling_used>`
+	// --- SEND SIGNAL TO PANEL THAT FILE IS BEING READ ---
+	const relativePath = getRelativePath(path)
 
-		yield { toSave }
+	const toolCalling = JSON.stringify({
+		header: `READ: ${relativePath}:${start_line}-${end_line}`
+	})
+	const toSave = `<tool_calling_used>${toolCalling}</tool_calling_used>`
 
-		// --- START FILE READ ---
-		const fs = acode.require('fs')
+	yield { toSave }
 
-		const exists = await fs(path).exists()
+	// --- START FILE READ ---
+	const fs = acode.require('fs')
 
-		if (!exists) {
-			throw new Error('File does not exist.')
-		}
+	const exists = await fs(path).exists()
 
-		const content = await fs(path).readFile('utf-8')
-
-		const lines = content.split('\n')
-
-		const result = lines
-			.slice(start_line - 1, end_line)
-			.map((line, index) => `${start_line + index}: ${line}`)
-			.join('\n')
-
-		yield { result }
-	} catch (error: any) {
-		throw error
+	if (!exists) {
+		throw new Error('File does not exist.')
 	}
+
+	const content = await fs(path).readFile('utf-8')
+
+	const lines = content.split('\n')
+
+	const result = lines
+		.slice(start_line - 1, end_line)
+		.map((line, index) => `${start_line + index}: ${line}`)
+		.join('\n')
+
+	yield { result }
 }

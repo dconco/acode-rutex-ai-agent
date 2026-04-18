@@ -23,12 +23,11 @@ export default async function* ({
 
 	if (openFile && openFile.readOnly) throw new Error('File is readonly')
 
-	if (!openFile)
-		openFile = acode.newEditorFile(path, { render: true, editable: false })
-	else {
-		openFile.editable = false
-		openFile.makeActive()
+	if (!openFile) {
+		const filename = path.substring(path.lastIndexOf('/') + 1)
+		openFile = acode.newEditorFile(filename, { uri: path, render: true })
 	}
+	else openFile.makeActive()
 
 	try {
 		if (openFile) openFile.markChanged = false
@@ -135,7 +134,6 @@ export default async function* ({
 		}
 	} finally {
 		if (openFile) {
-			openFile.editable = true
 			openFile.markChanged = true
 		}
 	}

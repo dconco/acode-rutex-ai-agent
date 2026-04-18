@@ -81,19 +81,78 @@ export const tools = [
    {
       type: "function",
       function: {
-         name: "rename_file",
-         description: "Rename/move a file in the project.",
+         name: "rename_path",
+         description: "Rename a file/directory in the project.",
          parameters: {
             type: "object",
             required: ["path", "new_path"],
             properties: {
                path: {
                   type: "string",
-                  description: "The full path to the file",
+                  description: "The full path to the file/directory",
                },
                new_path: {
                   type: "string",
-                  description: "The new full path for the file",
+                  description: "The new full path for the file/directory",
+               },
+            },
+         },
+      },
+   },
+   {
+      type: "function",
+      function: {
+         name: "move_path",
+         description: "Move a file/directory in the project.",
+         parameters: {
+            type: "object",
+            required: ["path", "new_path"],
+            properties: {
+               path: {
+                  type: "string",
+                  description: "The full path to the file/directory",
+               },
+               new_path: {
+                  type: "string",
+                  description: "The new full path for the file/directory",
+               },
+            },
+         },
+      },
+   },
+   {
+      type: "function",
+      function: {
+         name: "create_file",
+         description: "Create a new file in the project.",
+         parameters: {
+            type: "object",
+            required: ["path"],
+            properties: {
+               path: {
+                  type: "string",
+                  description: "The full path to the file",
+               },
+               content: {
+                  type: "string",
+                  description: "The optional content to write in the new file, can be empty",
+               },
+            },
+         },
+      },
+   },
+   {
+      type: "function",
+      function: {
+         name: "create_dir",
+         description: "Create a new directory in the project.",
+         parameters: {
+            type: "object",
+            required: ["path"],
+            properties: {
+               path: {
+                  type: "string",
+                  description: "The full path to the directory, parent folders must exist",
                },
             },
          },

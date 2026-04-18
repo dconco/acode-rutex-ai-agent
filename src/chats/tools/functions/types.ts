@@ -27,7 +27,21 @@ export interface EditFileInfo {
 
 export interface RenameFileInfo {
 	path: string
+	new_name: string
+}
+
+export interface MoveFileInfo {
+	path: string
 	new_path: string
+}
+
+export interface CreateFileInfo {
+   path: string
+   content: string
+}
+
+export interface CreateDirInfo {
+   path: string
 }
 
 export type ToolsReturnType = {
@@ -36,5 +50,5 @@ export type ToolsReturnType = {
 }
 
 export type ToolsFunction = (
-	args: ReadFileInfo | ListDirInfo
+	args: ReadFileInfo | ListDirInfo | RenameFileInfo | MoveFileInfo | EditFileInfo | CreateFileInfo | CreateDirInfo
 ) => AsyncGenerator<ToolsReturnType>
