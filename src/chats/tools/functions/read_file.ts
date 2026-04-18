@@ -13,7 +13,7 @@ export default async function* ({
 	const toolCalling = JSON.stringify({
 		header: `READ: ${relativePath}:${start_line}-${end_line}`
 	})
-	const toSave = `<tool_calling_used>${toolCalling}</tool_calling_used>`
+	const toSave = `<display_ui>${toolCalling}</display_ui>`
 
 	yield { toSave }
 

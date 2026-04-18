@@ -130,7 +130,7 @@ export default async function* ({
 			editedFileHistoryId: id
 		} as DisplayToolsCallUsed)
 
-		const toSave = `<tool_calling_used>${toolCalling}</tool_calling_used>`
+		const toSave = `<display_ui>${toolCalling}</display_ui>`
 
 		yield {
 			result: `[EDITED] +${totalAdded} -${totalRemoved}`,

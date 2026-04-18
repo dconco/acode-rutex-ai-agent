@@ -1,15 +1,14 @@
-import { CreateFileInfo } from "./types";
-import { getRelativePath } from "./utils";
+import { CreateFileInfo } from './types'
+import { getRelativePath } from './utils'
 
 export default async function* ({ path, content = '' }: CreateFileInfo) {
-
 	// --- SEND SIGNAL TO PANEL THAT FILE IS BEING READ ---
 	const relativePath = getRelativePath(path)
 
 	const toolCalling = JSON.stringify({
 		header: `FILE CREATED: ${relativePath}`
 	})
-	const toSave = `<tool_calling_used>${toolCalling}</tool_calling_used>`
+	const toSave = `<display_ui>${toolCalling}</display_ui>`
 
 	// --- START FILE READ ---
 	const fs = acode.require('fs')

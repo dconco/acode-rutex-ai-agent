@@ -23,7 +23,7 @@ export default async function* ({ path, content = '' }: CreateFileInfo) {
 	const toolCalling = JSON.stringify({
 		header: result
 	})
-	const toSave = `<tool_calling_used>${toolCalling}</tool_calling_used>`
+	const toSave = `<display_ui>${toolCalling}</display_ui>`
 
 	await fs(path).delete()
 

@@ -12,7 +12,7 @@ import { escapeHtml } from './utils'
 import { processSingleToolCallTag } from './commandParser'
 import { OldEditedFileLines } from '../chats/tools/functions/types'
 
-const TOOL_TAG_REGEX = /<tool_calling_used>[\s\S]*?<\/tool_calling_used>/gi
+const TOOL_TAG_REGEX = /<display_ui>[\s\S]*?<\/display_ui>/gi
 
 hljs.registerLanguage('bash', bash as any)
 hljs.registerLanguage('sh', bash as any)

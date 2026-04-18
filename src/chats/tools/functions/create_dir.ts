@@ -9,7 +9,7 @@ export default async function* ({ path }: CreateDirInfo) {
 	const toolCalling = JSON.stringify({
 		header: `FOLDER CREATED: ${relativePath}`
 	})
-	const toSave = `<tool_calling_used>${toolCalling}</tool_calling_used>`
+	const toSave = `<display_ui>${toolCalling}</display_ui>`
 
 	// --- START FILE READ ---
 	const fs = acode.require('fs')

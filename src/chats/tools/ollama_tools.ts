@@ -85,15 +85,15 @@ export const tools = [
 			description: 'Rename a file/directory in the project.',
 			parameters: {
 				type: 'object',
-				required: ['path', 'new_path'],
+				required: ['path', 'new_name'],
 				properties: {
 					path: {
 						type: 'string',
 						description: 'The full path to the file/directory'
 					},
-					new_path: {
+					new_name: {
 						type: 'string',
-						description: 'The new full path for the file/directory'
+						description: 'The new name (not path) for the file/directory'
 					}
 				}
 			}

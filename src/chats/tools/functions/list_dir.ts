@@ -12,7 +12,7 @@ export default async function* ({
 		header: `VIEWED: ${relativePath}`
 	})
 
-	const toSave = `<tool_calling_used>${toolCalling}</tool_calling_used>`
+	const toSave = `<display_ui>${toolCalling}</display_ui>`
 	yield { toSave }
 
 	// --- START FILE READ ---
