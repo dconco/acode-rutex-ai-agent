@@ -34,14 +34,6 @@ export default [
 		notes: 'Preview tier for the Gemini 2.5 Pro line.'
 	},
 	{
-		id: 'gemini-3.1-flash-lite-preview',
-		label: 'Gemini 3.1 Flash-Lite',
-		contextWindow: '1M tokens',
-		maxOutputTokens: '64K tokens',
-		bestFor: ['Cost-sensitive tasks', 'High throughput', 'Simple chat'],
-		notes: 'Most economical option in the Gemini 3 series.'
-	},
-	{
 		id: 'gemini-2.5-flash-thinking',
 		label: 'Gemini 2.5 Flash Thinking',
 		contextWindow: '1M tokens',

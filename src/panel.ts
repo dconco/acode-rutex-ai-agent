@@ -550,6 +550,7 @@ const renderPanel = (container: HTMLElement): (() => void) => {
 				}
 			}
 		} catch (e: any) {
+			alert(e.message || 'There was an unknown error')
 			if (e instanceof Error && e.name === 'AbortError') {
 				return
 			}
@@ -561,7 +562,7 @@ const renderPanel = (container: HTMLElement): (() => void) => {
 			if (!liveContent) liveContent = initializeLiveResponse()
 			if (liveContent)
 				liveContent.innerHTML += `<div class="error">${escapeHtml(
-					e.message || String(e)
+					e.message || 'There was an unknown error'
 				)}</div>`
 		} finally {
 			if (liveContent) {
