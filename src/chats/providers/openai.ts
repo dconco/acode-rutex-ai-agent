@@ -21,14 +21,16 @@ export default async function* (
 	})
 
 	// Keep incoming history plain; tool state is built only inside this loop.
-	const turnMessages: any[] = messages.map(m => ({ role: m.role, content: m.content }))
+	const input: any[] = messages
+		.filter(m => m.role !== 'tool')
+		.map(m => ({ role: m.role, content: m.content }))
+
 	const openaiTools = ollamaTools.map(tool => ({
 		type: 'function' as const,
-		function: {
-			name: tool.function.name,
-			description: tool.function.description,
-			parameters: tool.function.parameters
-		}
+		name: tool.function.name,
+		description: tool.function.description,
+		parameters: tool.function.parameters,
+		strict: false
 	}))
 
 	let fullText = ''
@@ -38,52 +40,53 @@ export default async function* (
 	while (true) {
 		if (signal?.aborted) break
 
-		const completion = await client.chat.completions.create(
+		const response: any = await client.responses.create(
 			{
 				model,
+				instructions: aiSettings.systemInstruction,
 				temperature: aiSettings.temperature,
-				max_tokens: aiSettings.maxTokens,
+				max_output_tokens: aiSettings.maxTokens,
+				parallel_tool_calls: false,
 				tool_choice: 'auto',
 				tools: openaiTools,
-				messages: [
-					{ role: 'system', content: aiSettings.systemInstruction },
-					...turnMessages
-				]
+				input
 			},
 			{ signal }
 		)
 
-		resolvedModel = completion.model ?? resolvedModel
+		resolvedModel = response?.model ?? resolvedModel
 
-		if (completion.usage) {
+		if (response?.usage) {
 			usage = {
-				inputTokens: completion.usage.prompt_tokens ?? 0,
-				outputTokens: completion.usage.completion_tokens ?? 0,
-				totalTokens: completion.usage.total_tokens ?? 0
+				inputTokens:
+					response.usage.input_tokens ?? response.usage.prompt_tokens ?? 0,
+				outputTokens:
+					response.usage.output_tokens ?? response.usage.completion_tokens ?? 0,
+				totalTokens: response.usage.total_tokens ?? 0
 			}
 		}
 
-		const assistantMessage = completion.choices[0]?.message
-		const turnText = assistantMessage?.content ?? ''
+		const turnText = getResponseText(response)
 
 		if (turnText) {
 			fullText += turnText
 			yield { type: 'text', model: resolvedModel, delta: turnText }
 		}
 
-		const toolCalls = assistantMessage?.tool_calls ?? []
+		const toolCalls = Array.isArray(response?.output)
+			? response.output.filter(
+					(item: any) => item?.type === 'function_call' && item?.name
+			  )
+			: []
+
 		if (!toolCalls.length) break
 
-		turnMessages.push({
-			role: 'assistant',
-			content: turnText,
-			tool_calls: toolCalls
-		})
+		// Preserve the model output items (including reasoning/function calls)
+		// before appending function_call_output items.
+		input.push(...response.output)
 
 		for (const call of toolCalls) {
-			if (call?.type !== 'function') continue
-
-			const toolName = call?.function?.name
+			const toolName = call?.name
 			if (!toolName) continue
 
 			try {
@@ -91,7 +94,7 @@ export default async function* (
 					await require(`../tools/functions/${toolName}`)
 				).default
 
-				const rawArgs = call.function.arguments ?? '{}'
+				const rawArgs = call?.arguments ?? '{}'
 				const args = safeJsonParse(rawArgs)
 				const chunkedResult = toolFunction(args as any)
 				let resultContent = ''
@@ -111,19 +114,19 @@ export default async function* (
 					}
 				}
 
-				turnMessages.push({
-					role: 'tool',
-					tool_call_id: call.id,
-					content: resultContent || '[NO RESULT]'
+				input.push({
+					type: 'function_call_output',
+					call_id: call.call_id,
+					output: resultContent || '[NO RESULT]'
 				})
 			} catch (e: any) {
 				const errorMessage = e instanceof Error ? e.message : 'Unknown error'
 				clg(errorMessage)
 
-				turnMessages.push({
-					role: 'tool',
-					tool_call_id: call.id,
-					content: `[ERROR] ${errorMessage}`
+				input.push({
+					type: 'function_call_output',
+					call_id: call.call_id,
+					output: `[ERROR] ${errorMessage}`
 				})
 			}
 		}
@@ -144,4 +147,23 @@ function safeJsonParse(raw: string): Record<string, any> {
 	} catch {
 		return {}
 	}
+}
+
+function getResponseText(response: any): string {
+	if (response?.output_text) return response.output_text
+	if (!Array.isArray(response?.output)) return ''
+
+	let text = ''
+
+	for (const item of response.output) {
+		if (item?.type !== 'message' || !Array.isArray(item?.content)) continue
+
+		for (const contentPart of item.content) {
+			if (contentPart?.type === 'output_text' && contentPart?.text) {
+				text += contentPart.text
+			}
+		}
+	}
+
+	return text
 }

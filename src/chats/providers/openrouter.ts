@@ -33,7 +33,8 @@ export default async function* (
 		type: 'function' as const,
 		name: tool.function.name,
 		description: tool.function.description,
-		parameters: tool.function.parameters
+		parameters: tool.function.parameters,
+		strict: false
 	}))
 
 	let fullText = ''
@@ -77,8 +78,10 @@ export default async function* (
 
 		if (response?.usage) {
 			usage = {
-				inputTokens: response.usage.inputTokens ?? 0,
-				outputTokens: response.usage.outputTokens ?? 0,
+				inputTokens:
+					response.usage.inputTokens ?? response.usage.input_tokens ?? 0,
+				outputTokens:
+					response.usage.outputTokens ?? response.usage.output_tokens ?? 0,
 				totalTokens: response.usage.totalTokens ?? 0
 			}
 		}
@@ -96,13 +99,15 @@ export default async function* (
 		for (const call of toolCalls) {
 			const toolName = call?.name as string
 			if (!toolName) continue
+			const callId = call?.callId ?? call?.call_id
 
 			try {
 				const toolFunction: ToolsFunction = (
 					await require(`../tools/functions/${toolName}`)
 				).default
 
-				const chunkedResult = toolFunction(call?.arguments ?? '{}')
+				const args = safeJsonParse(call?.arguments ?? '{}')
+				const chunkedResult = toolFunction(args as any)
 				let resultContent = ''
 
 				for await (const toolChunk of chunkedResult) {
@@ -122,7 +127,8 @@ export default async function* (
 
 				nextInput.push({
 					type: 'function_call_output',
-					callId: call.callId,
+					id: createFunctionOutputId(callId),
+					callId,
 					output: resultContent || '[NO RESULT]'
 				})
 			} catch (e: any) {
@@ -131,7 +137,8 @@ export default async function* (
 
 				nextInput.push({
 					type: 'function_call_output',
-					callId: call.callId,
+					id: createFunctionOutputId(callId),
+					callId,
 					output: `[ERROR] ${errorMessage}`
 				})
 			}
@@ -149,6 +156,7 @@ export default async function* (
 
 function getResponseText(response: any): string {
 	if (response?.outputText) return response.outputText
+	if (response?.output_text) return response.output_text
 	if (!Array.isArray(response?.output)) return ''
 
 	let text = ''
@@ -164,4 +172,16 @@ function getResponseText(response: any): string {
 	}
 
 	return text
+}
+
+function safeJsonParse(raw: string): Record<string, any> {
+	try {
+		return JSON.parse(raw)
+	} catch {
+		return {}
+	}
+}
+
+function createFunctionOutputId(callId?: string): string {
+	return `fco_${callId ?? 'unknown'}_${Date.now()}`
 }
