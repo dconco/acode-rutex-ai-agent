@@ -54,6 +54,7 @@ export default async function* ({
 
 		const rPath = getRelativePath(uri, false)
 		currentEdittedFiles[rPath] ??= {
+			type: 'edited',
 			totalAdded: 0,
 			totalRemoved: 0,
 			editedHistoryIds: []

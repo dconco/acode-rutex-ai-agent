@@ -68,6 +68,13 @@ export function openEditedFilesDialog() {
 		})
 
 		rejectBtn?.addEventListener('click', async () => {
+         if (fileInfo.type === 'created') {
+            const fs = acode.require('fs')
+            await fs(filePath)?.delete()
+            acceptBtn?.click()
+            return
+         }
+
 			const editedFileHistoryIds =
 				currentEdittedFiles[filePath].editedHistoryIds
 
@@ -79,6 +86,8 @@ export function openEditedFilesDialog() {
 			for (const record of historyRecords) {
 				revertEditedLines(record?.content ?? [], record.filePath)
 			}
+
+         acceptBtn?.click()
 		})
 
 		filesList.appendChild(item)
@@ -99,4 +108,5 @@ function revertEditedLines(history: OldEditedFileLines[], file: string) {
 	// --- Reverse the array so we can start reverting the file edits right from the very last ---
 	// --- Filter and remove edits we can't revert ---
 	const reversedHistory = history.reverse().filter(entry => entry.revertable)
+   clg('Revert history', reversedHistory)
 }

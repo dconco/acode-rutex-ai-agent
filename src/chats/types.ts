@@ -47,6 +47,7 @@ export type StreamFunction = (
 ) => AsyncGenerator<StreamChunk>
 
 export type CurrentEditedFiles = Record<string, {
+	type: 'edited' | 'created'
 	totalAdded: number,
 	totalRemoved: number,
 	editedHistoryIds: string[]
