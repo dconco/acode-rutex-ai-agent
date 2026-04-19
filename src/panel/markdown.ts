@@ -206,8 +206,10 @@ export const renderEditedFileLines = (
 	lines: OldEditedFileLines[],
 	editedFilePath: string
 ): string => {
+	// Normalize upfront so grouping/range detection is deterministic.
 	lines.sort((a, b) => a.line - b.line)
 
+	// Keep all edit events for each line (a line can have both removed and added).
 	const groups = new Map<number, OldEditedFileLines[]>()
 
 	for (const entry of lines) {
@@ -216,10 +218,11 @@ export const renderEditedFileLines = (
 	}
 
 	const uniqueLines = [...groups.keys()].sort((a, b) => a - b)
-	const entries: OldEditedFileLines[] = []
 
+	// First, split into consecutive ranges (e.g. 1-4, 8-10).
+	const blocks: Array<{ startLine: number; endLine: number; lines: number[] }> = []
 	for (let i = 0; i < uniqueLines.length; ) {
-		const start = i
+		const blockStartIndex = i
 		while (
 			i + 1 < uniqueLines.length &&
 			uniqueLines[i + 1] === uniqueLines[i] + 1
@@ -227,23 +230,12 @@ export const renderEditedFileLines = (
 			i++
 		}
 
-		const blockLines = uniqueLines.slice(start, i + 1)
-
-		// For consecutive line blocks, show removals first then additions.
-		if (blockLines.length > 1) {
-			for (const line of blockLines) {
-				for (const entry of groups.get(line) || []) {
-					if (!entry.isAdded) entries.push(entry)
-				}
-			}
-			for (const line of blockLines) {
-				for (const entry of groups.get(line) || []) {
-					if (entry.isAdded) entries.push(entry)
-				}
-			}
-		} else {
-			entries.push(...(groups.get(blockLines[0]) || []))
-		}
+		const blockLines = uniqueLines.slice(blockStartIndex, i + 1)
+		blocks.push({
+			startLine: blockLines[0],
+			endLine: blockLines[blockLines.length - 1],
+			lines: blockLines
+		})
 
 		i++
 	}
@@ -266,26 +258,64 @@ export const renderEditedFileLines = (
 		return highlighted
 	}
 
-	const rows = entries
-		.map(entry =>
-			[
-				`<div class="edited-line ${entry.isAdded ? 'added' : 'removed'}">`,
-				`<span class="edited-line-number">${entry.line}</span>`,
-				`<span class="edited-line-prefix">${
-					entry.isAdded ? '+' : '-'
-				}</span>`,
-				`<span class="edited-line-text">${highlight(entry.text)}</span>`,
-				'</div>'
-			].join('')
-		)
-		.join('')
+	const renderEntryRow = (entry: OldEditedFileLines): string =>
+		[
+			`<div class="edited-line ${entry.isAdded ? 'added' : 'removed'}">`,
+			`<span class="edited-line-number">${entry.line}</span>`,
+			`<span class="edited-line-prefix">${entry.isAdded ? '+' : '-'}</span>`,
+			`<span class="edited-line-text">${highlight(entry.text)}</span>`,
+			'</div>'
+		].join('')
+
+	const rows: string[] = []
+
+	for (let blockIndex = 0; blockIndex < blocks.length; blockIndex++) {
+		const block = blocks[blockIndex]
+
+		// Insert a demarcation row whenever there is a gap between blocks.
+		if (blockIndex > 0) {
+			const prev = blocks[blockIndex - 1]
+			if (block.startLine > prev.endLine + 1) {
+				const gapStart = prev.endLine + 1
+				const gapEnd = block.startLine - 1
+				const gapLabel =
+					gapStart === gapEnd
+						? `Line ${gapStart} omitted`
+						: `Lines ${gapStart}-${gapEnd} omitted`
+
+				rows.push(
+					`<div class="edited-line-separator"><span>${escapeHtml2(
+						gapLabel
+					)}</span></div>`
+				)
+			}
+		}
+
+		// For multi-line consecutive blocks, show removed lines first, then added lines.
+		if (block.lines.length > 1) {
+			for (const line of block.lines) {
+				for (const entry of groups.get(line) || []) {
+					if (!entry.isAdded) rows.push(renderEntryRow(entry))
+				}
+			}
+			for (const line of block.lines) {
+				for (const entry of groups.get(line) || []) {
+					if (entry.isAdded) rows.push(renderEntryRow(entry))
+				}
+			}
+		} else {
+			for (const entry of groups.get(block.lines[0]) || []) {
+				rows.push(renderEntryRow(entry))
+			}
+		}
+	}
 
 	return [
 		'<div class="code-block edited-lines-block">',
 		`<div class="code-header edited-h"><span class="code-lang edited">EDITED: ${escapeHtml(
 			editedFilePath
 		)}</span></div>`,
-		`<div class="code-body edited-lines-body">${rows}</div>`,
+		`<div class="code-body edited-lines-body">${rows.join('')}</div>`,
 		'</div>'
 	].join('')
 }
