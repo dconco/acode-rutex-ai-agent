@@ -45,3 +45,9 @@ export type StreamFunction = (
 	messages: ChatMessage[],
 	signal?: AbortSignal
 ) => AsyncGenerator<StreamChunk>
+
+export type CurrentEditedFiles = Record<string, {
+	totalAdded: number,
+	totalRemoved: number,
+	editedHistoryIds: string[]
+}>

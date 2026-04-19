@@ -1,5 +1,7 @@
 import { OpenRouter } from '@openrouter/sdk'
 import { aiSettings } from '../settings'
+import { ToolsFunction } from '../tools/functions/types'
+import { tools as ollamaTools } from '../tools/ollama_tools'
 import { Usage, StreamChunk, ChatMessage } from '../types'
 
 // ─────────────────────────────────────────────
@@ -17,46 +19,121 @@ export default async function* (
 		appTitle: aiSettings.openRouterSiteName || undefined
 	})
 
-	const stream = await client.chat.send(
-		{
-			chatRequest: {
-				model,
-				temperature: aiSettings.temperature,
-				maxCompletionTokens: aiSettings.maxTokens,
-				stream: true,
-				messages: [
-					{ role: 'system', content: aiSettings.systemInstruction },
-					...messages.map(m => ({ role: m.role, content: m.content }) as any)
-				]
-			}
-		},
-		{ signal }
-	)
+	// Mirror the provider pattern used elsewhere: plain incoming history,
+	// then provider-local tool loop with function_call_output continuations.
+	const baseInput: any[] = messages
+		.filter(m => m.role !== 'tool')
+		.map(m => ({
+			type: 'message',
+			role: m.role,
+			content: m.content
+		}))
+
+	const responseTools = ollamaTools.map(tool => ({
+		type: 'function' as const,
+		name: tool.function.name,
+		description: tool.function.description,
+		parameters: tool.function.parameters
+	}))
 
 	let fullText = ''
 	let resolvedModel = model
 	let usage: Usage = { inputTokens: 0, outputTokens: 0, totalTokens: 0 }
+	let previousResponseId: string | undefined
+	let nextInput: any[] = baseInput
 
-	for await (const chunk of stream) {
+	while (true) {
 		if (signal?.aborted) break
 
-		if (chunk.error) {
-			throw new Error(chunk.error.message)
+		const response: any = await client.beta.responses.send(
+			{
+				responsesRequest: {
+					model,
+					instructions: aiSettings.systemInstruction,
+					temperature: aiSettings.temperature,
+					maxOutputTokens: aiSettings.maxTokens,
+					stream: false,
+					parallelToolCalls: false,
+					tools: responseTools,
+					input: nextInput,
+					previousResponseId
+				}
+			},
+			{ signal }
+		)
+
+		if (response?.error) {
+			throw new Error(response.error?.message || 'OpenRouter response error')
 		}
 
-		resolvedModel = chunk.model ?? resolvedModel
+		resolvedModel = response?.model ?? resolvedModel
+		previousResponseId = response?.id ?? previousResponseId
 
-		const delta = chunk.choices[0]?.delta?.content ?? ''
-		if (delta) {
-			fullText += delta
-			yield { type: 'text', model: resolvedModel, delta }
+		const turnText = getResponseText(response)
+		if (turnText) {
+			fullText += turnText
+			yield { type: 'text', model: resolvedModel, delta: turnText }
 		}
 
-		if (chunk.usage) {
+		if (response?.usage) {
 			usage = {
-				inputTokens: chunk.usage.promptTokens ?? 0,
-				outputTokens: chunk.usage.completionTokens ?? 0,
-				totalTokens: chunk.usage.totalTokens ?? 0
+				inputTokens: response.usage.inputTokens ?? 0,
+				outputTokens: response.usage.outputTokens ?? 0,
+				totalTokens: response.usage.totalTokens ?? 0
+			}
+		}
+
+		const toolCalls = Array.isArray(response?.output)
+			? response.output.filter(
+					(item: any) => item?.type === 'function_call' && item?.name
+			  )
+			: []
+
+		if (!toolCalls.length) break
+
+		nextInput = []
+
+		for (const call of toolCalls) {
+			const toolName = call?.name as string
+			if (!toolName) continue
+
+			try {
+				const toolFunction: ToolsFunction = (
+					await require(`../tools/functions/${toolName}`)
+				).default
+
+				const chunkedResult = toolFunction(call?.arguments ?? '{}')
+				let resultContent = ''
+
+				for await (const toolChunk of chunkedResult) {
+					if (toolChunk.toSave) {
+						yield {
+							type: 'tool',
+							delta: toolChunk.toSave,
+							model: resolvedModel
+						}
+					}
+
+					if (toolChunk.result) {
+						resultContent = toolChunk.result
+						break
+					}
+				}
+
+				nextInput.push({
+					type: 'function_call_output',
+					callId: call.callId,
+					output: resultContent || '[NO RESULT]'
+				})
+			} catch (e: any) {
+				const errorMessage = e instanceof Error ? e.message : 'Unknown error'
+				clg(errorMessage)
+
+				nextInput.push({
+					type: 'function_call_output',
+					callId: call.callId,
+					output: `[ERROR] ${errorMessage}`
+				})
 			}
 		}
 	}
@@ -68,4 +145,23 @@ export default async function* (
 		model: resolvedModel,
 		usage
 	}
+}
+
+function getResponseText(response: any): string {
+	if (response?.outputText) return response.outputText
+	if (!Array.isArray(response?.output)) return ''
+
+	let text = ''
+
+	for (const item of response.output) {
+		if (item?.type !== 'message' || !Array.isArray(item?.content)) continue
+
+		for (const contentPart of item.content) {
+			if (contentPart?.type === 'output_text' && contentPart?.text) {
+				text += contentPart.text
+			}
+		}
+	}
+
+	return text
 }

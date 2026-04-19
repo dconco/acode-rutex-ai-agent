@@ -338,12 +338,15 @@
 	/* ── Edited Files Bar ─────────────────────────── */
 	.edited-files-bar {
 		flex-shrink: 0;
-		display: flex;
+		display: none;
 		flex-direction: column;
 		gap: 6px;
 		padding: 7px 10px;
 		background: var(--bg-card);
 		border-bottom: 1px solid var(--border);
+	}
+	.edited-files-bar.opened {
+		display: flex;
 	}
 	.edited-files-head {
 		display: flex;
@@ -1509,54 +1512,11 @@
 	<div class="edited-files-bar" id="edited-files-bar">
 		<div class="edited-files-head">
 			<button class="edited-files-bulk-btn" type="button">
-				Accept all / Reject all
+				<span id="accept-all-btn">Accept all</span> / <span id="reject-all-btn"	>Reject all</span>
 			</button>
 		</div>
-		<div class="edited-files-list">
-			<div class="edited-file-option">
-				<span class="edited-file-name">src/panel.ts</span>
-				<span class="edited-file-added">+42</span>
-				<span class="edited-file-removed">-11</span>
-				<button
-					class="edited-file-action accept"
-					type="button"
-					title="Accept">
-					<svg viewBox="0 0 24 24">
-						<polyline points="20 6 9 17 4 12" />
-					</svg>
-				</button>
-				<button
-					class="edited-file-action reject"
-					type="button"
-					title="Reject">
-					<svg viewBox="0 0 24 24">
-						<line x1="18" y1="6" x2="6" y2="18" />
-						<line x1="6" y1="6" x2="18" y2="18" />
-					</svg>
-				</button>
-			</div>
-			<div class="edited-file-option">
-				<span class="edited-file-name">src/panel/markdown.ts</span>
-				<span class="edited-file-added">+16</span>
-				<span class="edited-file-removed">-4</span>
-				<button
-					class="edited-file-action accept"
-					type="button"
-					title="Accept">
-					<svg viewBox="0 0 24 24">
-						<polyline points="20 6 9 17 4 12" />
-					</svg>
-				</button>
-				<button
-					class="edited-file-action reject"
-					type="button"
-					title="Reject">
-					<svg viewBox="0 0 24 24">
-						<line x1="18" y1="6" x2="6" y2="18" />
-						<line x1="6" y1="6" x2="18" y2="18" />
-					</svg>
-				</button>
-			</div>
+		<div class="edited-files-list" id="edited-files-list">
+			
 		</div>
 	</div>
 

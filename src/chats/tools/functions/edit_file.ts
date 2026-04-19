@@ -1,4 +1,6 @@
+import { openEditedFilesDialog } from '../../../panel/renderEditedFilesDialog'
 import { getCurrentChatID, saveEditedFileHistory } from '../../history/chatHistory'
+import { CurrentEditedFiles } from '../../types'
 import {
 	DisplayToolsCallUsed,
 	EditFileInfo,
@@ -7,6 +9,8 @@ import {
 	ToolsReturnType
 } from './types'
 import { getRelativePath } from './utils'
+
+export const currentEdittedFiles: CurrentEditedFiles = {}
 
 export default async function* ({
 	path,
@@ -46,6 +50,10 @@ export default async function* ({
 		let totalAdded = 0
 		let totalRemoved = 0
 
+		const rPath = getRelativePath(path, false)
+		currentEdittedFiles[rPath] ??= { totalAdded: 0, totalRemoved: 0, editedHistoryIds: [] }
+
+
 		for (let index = 0; index < lines.length; index++) {
 			const { line, text } = lines[index]
 
@@ -63,6 +71,7 @@ export default async function* ({
 			if (text === '') {
 				// delete, so only one line object shows which is removed line
 				totalRemoved++
+				currentEdittedFiles[rPath].totalRemoved++
 
 				// Because we sorted descending, deleting this line
 				// doesn't shift the indices of the lines we still need to process.
@@ -84,7 +93,9 @@ export default async function* ({
 						revertable: i == 0 ? false : true
 					}
 					newLines.push(buildNewContentLines)
+
 					totalAdded++
+					currentEdittedFiles[rPath].totalAdded++
 				}
 			} else {
 				// Standard single line update or insertion
@@ -95,9 +106,12 @@ export default async function* ({
 					text,
 					isAdded: true
 				})
+
 				totalAdded++
+				currentEdittedFiles[rPath].totalAdded++
 			}
 		}
+
 		// --- Save the file ---
 		const newContent = contentLines.join('\n')
 
@@ -124,6 +138,10 @@ export default async function* ({
 		// --- SEND SIGNAL TO PANEL THAT FILE IS BEING READ ---
 		const relativePath = getRelativePath(path)
 		const id = await saveEditedFileHistory(newLines, path, getCurrentChatID())
+
+		currentEdittedFiles[rPath].editedHistoryIds.push(id)
+
+		openEditedFilesDialog()
 
 		const toolCalling = JSON.stringify({
 			path: relativePath,

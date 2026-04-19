@@ -678,7 +678,7 @@ const renderPanel = (container: HTMLElement): (() => void) => {
 		inputEl.focus()
 	})
 
-	settingsContainer(container, doc.document)
+	settingsContainer(container)
 	resize()
 	updateCount()
 	renderCtxBar()

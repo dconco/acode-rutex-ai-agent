@@ -44,13 +44,26 @@ export interface CreateDirInfo {
    path: string
 }
 
+export interface EditedFilesHistoryProps {
+   filterByIds?: string[]
+	filterByFile?: string
+	limit?: number
+}
+
 export type ToolsReturnType = {
    toSave?: string
 	result?: string
 }
 
 export type ToolsFunction = (
-	args: ReadFileInfo | ListDirInfo | RenameFileInfo | MoveFileInfo | EditFileInfo | CreateFileInfo | CreateDirInfo
+	args: ReadFileInfo
+				| ListDirInfo
+				| RenameFileInfo
+				| MoveFileInfo
+				| EditFileInfo
+				| CreateFileInfo
+				| CreateDirInfo
+				| EditedFilesHistoryProps
 ) => AsyncGenerator<ToolsReturnType>
 
 

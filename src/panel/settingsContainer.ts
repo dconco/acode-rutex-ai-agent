@@ -1,6 +1,5 @@
-import { getElement } from './utils'
+import { getElement, doc } from './utils'
 import {
-	addLifetimeTokens,
 	aiSettings,
 	formatTokenNumber,
 	saveAiSettingsToLocalStorage
@@ -36,7 +35,7 @@ const getProviderModels = (provider: Provider): ProviderModelMeta[] => {
 	}
 }
 
-export const settingsContainer = (container: HTMLElement, doc: Document) => {
+export const settingsContainer = (container: HTMLElement) => {
 	const aiPanelEl = getElement<HTMLElement>(container, '#ai-panel')
 	const settingsBtn = getElement<HTMLButtonElement>(container, '#settings-btn')
 	const settingsDialog = getElement<HTMLElement>(container, '#settings-dialog')
@@ -150,7 +149,7 @@ export const settingsContainer = (container: HTMLElement, doc: Document) => {
 	let modelMenuProvider: DropdownProvider | null = null
 	let modelMenuTrigger: HTMLButtonElement | null = null
 
-	const modelMenuEl = doc.createElement('div')
+	const modelMenuEl = doc.document.createElement('div')
 	modelMenuEl.className = 'model-search-menu'
 	modelMenuEl.innerHTML = `
 <input class="model-search-input" type="text" placeholder="Search model..." />
@@ -168,7 +167,7 @@ export const settingsContainer = (container: HTMLElement, doc: Document) => {
 	)
 
 	const escapeHtml = (value: string): string => {
-		const temp = doc.createElement('span')
+		const temp = doc.document.createElement('span')
 		temp.textContent = value
 		return temp.innerHTML
 	}
@@ -283,7 +282,7 @@ ${
 		modelSearchOptions.innerHTML = ''
 
 		if (!options.length) {
-			const empty = doc.createElement('div')
+			const empty = doc.document.createElement('div')
 			empty.className = 'model-search-empty'
 			empty.textContent = 'No models found.'
 			modelSearchOptions.appendChild(empty)
@@ -291,7 +290,7 @@ ${
 		}
 
 		options.forEach(model => {
-			const option = doc.createElement('button')
+			const option = doc.document.createElement('button')
 			option.className = 'model-search-option'
 			option.type = 'button'
 			option.textContent = `${model.label} (${model.id})`
@@ -422,7 +421,7 @@ ${
 		persistSettings()
 	})
 
-	doc.addEventListener('click', event => {
+	doc.document.addEventListener('click', event => {
 		if (
 			settingsDialogOpen &&
 			event.target instanceof Element &&
@@ -431,7 +430,7 @@ ${
 			closeSettingsDialog()
 	})
 
-	doc.addEventListener(
+	doc.document.addEventListener(
 		'click',
 		event => {
 			if (!modelMenuOpen) return

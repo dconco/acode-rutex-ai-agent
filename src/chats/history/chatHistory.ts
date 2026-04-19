@@ -18,7 +18,7 @@ type ChatHistoryRecord = {
 	messages: ChatMessage[]
 }
 
-type EditedFileHistoryRecord = {
+export type EditedFileHistoryRecord = {
 	id: string
 	content: OldEditedFileLines[]
 	filePath: string

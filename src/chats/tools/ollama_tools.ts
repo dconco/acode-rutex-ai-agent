@@ -176,5 +176,29 @@ export const tools = [
 				}
 			}
 		}
+	},
+	{
+		type: 'function',
+		function: {
+			name: 'edited_files_history',
+			description: 'Here you can access and retrieve every bit of edits made (using the edit_file tool) in every files.',
+			parameters: {
+				type: 'object',
+				properties: {
+					filterByIds: {
+						type: 'array',
+						description: "Get theses exact ID history, exactly the array length you passed that will be returned with the exact edit history id, and each ID may be from different files."
+					},
+					filterByFile: {
+						type: 'string',
+						description: "It takes full path. It will retrieve all edited histories of the file. when using 'filterByFile' you should set the 'limit' property."
+					},
+					limit: {
+						type: 'number',
+						description: 'Limit the length of edits to get on a particular file.'
+					}
+				}
+			}
+		}
 	}
 ]
