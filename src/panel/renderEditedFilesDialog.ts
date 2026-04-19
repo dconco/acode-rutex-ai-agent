@@ -1,38 +1,41 @@
-import { retrieveEditedFileHistory } from "../chats/history/chatHistory"
-import { currentEdittedFiles } from "../chats/tools/functions/edit_file"
-import { OldEditedFileLines } from "../chats/tools/functions/types"
-import { doc, escapeHtml } from "./utils"
+import { retrieveEditedFileHistory } from '../chats/history/chatHistory'
+import { currentEdittedFiles } from '../chats/tools/functions/edit_file'
+import { OldEditedFileLines } from '../chats/tools/functions/types'
+import { doc, escapeHtml } from './utils'
 
 export function openEditedFilesDialog() {
-   const dialog = doc.document.getElementById('edited-files-bar')
-   const filesList = doc.document.getElementById('edited-files-list')
+	const dialog = doc.document.getElementById('edited-files-bar')
+	const filesList = doc.document.getElementById('edited-files-list')
 
-   if (!dialog || !filesList) return
+	if (!dialog || !filesList) return
 
-   if (!dialog.classList.contains('opened')) dialog.classList.add('opened')
+	if (!dialog.classList.contains('opened')) dialog.classList.add('opened')
 
-   if (!Object.entries(currentEdittedFiles).length) {
-      closeEditedFilesDialog()
-   }
+	if (!Object.entries(currentEdittedFiles).length) {
+		closeEditedFilesDialog()
+	}
 
-   for (const filePath in currentEdittedFiles) {
-      const fileInfo = currentEdittedFiles[filePath]
-      const fileOption = filesList.querySelector('.edited-file-option[data-file-path]')
+	for (const filePath in currentEdittedFiles) {
+		const fileInfo = currentEdittedFiles[filePath]
+		const fileOption = filesList.querySelector(
+			'.edited-file-option[data-file-path]'
+		)
 
-      if (fileOption) {
-         const addedSpan = fileOption.querySelector('.edited-file-added')
-         const removedSpan = fileOption.querySelector('.edited-file-removed')
+		if (fileOption) {
+			const addedSpan = fileOption.querySelector('.edited-file-added')
+			const removedSpan = fileOption.querySelector('.edited-file-removed')
 
-         if (addedSpan) addedSpan.textContent = String(fileInfo.totalAdded)
-         if (removedSpan) removedSpan.textContent = String(fileInfo.totalRemoved)
+			if (addedSpan) addedSpan.textContent = String(fileInfo.totalAdded)
+			if (removedSpan)
+				removedSpan.textContent = String(fileInfo.totalRemoved)
 
-         continue
-      }
+			continue
+		}
 
-      const item = doc.document.createElement('div')
-      item.setAttribute('data-file-path', filePath)
-      item.className = 'edited-file-option'
-      item.innerHTML = `
+		const item = doc.document.createElement('div')
+		item.setAttribute('data-file-path', filePath)
+		item.className = 'edited-file-option'
+		item.innerHTML = `
          <span class="edited-file-name">${escapeHtml(filePath)}</span>
          <span class="edited-file-added">+${fileInfo.totalAdded}</span>
          <span class="edited-file-removed">-${fileInfo.totalRemoved}</span>
@@ -55,44 +58,45 @@ export function openEditedFilesDialog() {
          </button>
       `
 
-      const acceptBtn = item.querySelector<HTMLButtonElement>('.accept')
-      const rejectBtn = item.querySelector<HTMLButtonElement>('.reject')
+		const acceptBtn = item.querySelector<HTMLButtonElement>('.accept')
+		const rejectBtn = item.querySelector<HTMLButtonElement>('.reject')
 
-      acceptBtn?.addEventListener('click', () => {
-         item.remove()
-         delete currentEdittedFiles[filePath]
-         openEditedFilesDialog()
-      })
+		acceptBtn?.addEventListener('click', () => {
+			item.remove()
+			delete currentEdittedFiles[filePath]
+			openEditedFilesDialog()
+		})
 
-      rejectBtn?.addEventListener('click', async () => {
-         const editedFileHistoryIds = currentEdittedFiles[filePath].editedHistoryIds
+		rejectBtn?.addEventListener('click', async () => {
+			const editedFileHistoryIds =
+				currentEdittedFiles[filePath].editedHistoryIds
 
-         let historyRecords = await retrieveEditedFileHistory({ ids: editedFileHistoryIds })
-         historyRecords = historyRecords.reverse()
+			let historyRecords = await retrieveEditedFileHistory({
+				ids: editedFileHistoryIds
+			})
+			historyRecords = historyRecords.reverse()
 
-         for (const record of historyRecords) {
-            revertEditedLines(record.content, record.filePath)
-         }
-      })
+			for (const record of historyRecords) {
+				revertEditedLines(record?.content ?? [], record.filePath)
+			}
+		})
 
-      filesList.appendChild(item)
-
-   }
+		filesList.appendChild(item)
+	}
 }
 
 export function closeEditedFilesDialog() {
-   const dialog = doc.document.getElementById('edited-files-bar')
-   const filesList = doc.document.getElementById('edited-files-list')
+	const dialog = doc.document.getElementById('edited-files-bar')
+	const filesList = doc.document.getElementById('edited-files-list')
 
-   if (!dialog || !filesList) return
+	if (!dialog || !filesList) return
 
-   if (dialog.classList.contains('opened')) dialog.classList.remove('opened')
-   filesList.innerHTML = ''
+	if (dialog.classList.contains('opened')) dialog.classList.remove('opened')
+	filesList.innerHTML = ''
 }
 
-
 function revertEditedLines(history: OldEditedFileLines[], file: string) {
-   // --- Reverse the array so we can start reverting the file edits right from the very last ---
-   // --- Filter and remove edits we can't revert ---
-   const reversedHistory = history.reverse().filter(entry => entry.revertable)
+	// --- Reverse the array so we can start reverting the file edits right from the very last ---
+	// --- Filter and remove edits we can't revert ---
+	const reversedHistory = history.reverse().filter(entry => entry.revertable)
 }

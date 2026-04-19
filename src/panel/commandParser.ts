@@ -5,10 +5,10 @@ import { retrieveEditedFileHistory } from '../chats/history/chatHistory'
 
 const TOOL_TAG_REGEX = /<display_ui>([\s\S]*?)<\/display_ui>/gi
 
-export async function processSingleToolCallTag(tagText: string): Promise<{ html: string, editedFileHistoryId?: string }> {
-	const match = /<display_ui>([\s\S]*?)<\/display_ui>/i.exec(
-		tagText
-	)
+export async function processSingleToolCallTag(
+	tagText: string
+): Promise<{ html: string; editedFileHistoryId?: string }> {
+	const match = /<display_ui>([\s\S]*?)<\/display_ui>/i.exec(tagText)
 	if (!match) return { html: tagText }
 
 	const payload = (match[1] || '').trim()
@@ -47,25 +47,29 @@ export async function processToolCallsInText(text: string): Promise<string> {
 	return out
 }
 
-async function convertToolCallsToHTML(command: DisplayToolsCallUsed): Promise<{ html: string, editedFileHistoryId?: string }> {
+async function convertToolCallsToHTML(
+	command: DisplayToolsCallUsed
+): Promise<{ html: string; editedFileHistoryId?: string }> {
 	if ('header' in command) {
 		return {
 			html: `<div class="code-block">
 						<div class="code-header">
-							<span class="code-lang edited">${escapeHtml(
-								command.header
-							)}</span>
+							<span class="code-lang edited">${escapeHtml(command.header)}</span>
 						</div>
-					</div>`,
+					</div>`
 		}
 	}
 
 	if ('path' in command && command.editedFileHistoryId) {
-		const result = await retrieveEditedFileHistory({ ids: [command.editedFileHistoryId] })
+		const result = await retrieveEditedFileHistory({
+			ids: [command.editedFileHistoryId]
+		})
 
 		if (!result.length) return { html: '' }
 
-		return { html: renderEditedFileLines(result[0].content, command.path) }
+		return {
+			html: renderEditedFileLines(result[0]?.content ?? [], command.path)
+		}
 	}
 
 	return { html: '' }

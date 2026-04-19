@@ -1,20 +1,20 @@
 import { CreateFileInfo } from './types'
 import { getRelativePath } from './utils'
 
-export default async function* ({ path, content = '' }: CreateFileInfo) {
+export default async function* ({ uri, content = '' }: CreateFileInfo) {
 	// --- START FILE READ ---
 	const fs = acode.require('fs')
 
-	const exists = await fs(path)?.exists()
+	const exists = await fs(uri)?.exists()
 
 	if (!exists) {
 		throw new Error('Specified path does not exists.')
 	}
 
-	const fileInfo = await fs(path).stat()
+	const fileInfo = await fs(uri).stat()
 
 	// --- SEND SIGNAL TO PANEL THAT FILE IS BEING READ ---
-	const relativePath = getRelativePath(path)
+	const relativePath = getRelativePath(uri)
 
 	const result = `${
 		fileInfo.isFile ? 'FILE' : 'DIRECTORY'
@@ -25,7 +25,7 @@ export default async function* ({ path, content = '' }: CreateFileInfo) {
 	})
 	const toSave = `<display_ui>${toolCalling}</display_ui>`
 
-	await fs(path).delete()
+	await fs(uri).delete()
 
 	yield { result, toSave }
 }

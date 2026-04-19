@@ -1,9 +1,9 @@
 import { CreateDirInfo } from './types'
 import { getRelativePath } from './utils'
 
-export default async function* ({ path }: CreateDirInfo) {
+export default async function* ({ uri }: CreateDirInfo) {
 	// --- SEND SIGNAL TO PANEL THAT FILE IS BEING READ ---
-	const relativePath = getRelativePath(path)
+	const relativePath = getRelativePath(uri)
 
 	const toolCalling = JSON.stringify({
 		header: `FOLDER CREATED: ${relativePath}`
@@ -13,14 +13,14 @@ export default async function* ({ path }: CreateDirInfo) {
 	// --- START FILE READ ---
 	const fs = acode.require('fs')
 
-	const exists = await fs(path)?.exists()
+	const exists = await fs(uri)?.exists()
 
 	if (exists) {
 		throw new Error('Specified path already exists.')
 	}
 
-	const parentDir = path.substring(0, path.lastIndexOf('/'))
-	const dirName = path.substring(path.lastIndexOf('/') + 1)
+	const parentDir = uri.substring(0, uri.lastIndexOf('/'))
+	const dirName = uri.substring(uri.lastIndexOf('/') + 1)
 
 	const dirExists = await fs(parentDir).exists()
 

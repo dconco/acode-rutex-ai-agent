@@ -7,11 +7,11 @@ export const tools = [
 				'Read a file from the project. Returns the content of the file as a string.',
 			parameters: {
 				type: 'object',
-				required: ['path', 'start_line', 'end_line'],
+				required: ['uri', 'start_line', 'end_line'],
 				properties: {
-					path: {
+					uri: {
 						type: 'string',
-						description: 'The full path to the file'
+						description: 'The full uri to the file'
 					},
 					start_line: {
 						type: 'number',
@@ -32,11 +32,11 @@ export const tools = [
 			description: 'List all files in a directory.',
 			parameters: {
 				type: 'object',
-				required: ['path'],
+				required: ['uri'],
 				properties: {
-					path: {
+					uri: {
 						type: 'string',
-						description: 'The full path to the directory'
+						description: 'The full uri to the directory'
 					}
 				}
 			}
@@ -49,11 +49,11 @@ export const tools = [
 			description: 'Edit a file in the project.',
 			parameters: {
 				type: 'object',
-				required: ['path', 'lines'],
+				required: ['uri', 'lines'],
 				properties: {
-					path: {
+					uri: {
 						type: 'string',
-						description: 'The full path to the file'
+						description: 'The full uri to the file'
 					},
 					lines: {
 						type: 'array',
@@ -85,15 +85,15 @@ export const tools = [
 			description: 'Rename a file/directory in the project.',
 			parameters: {
 				type: 'object',
-				required: ['path', 'new_name'],
+				required: ['uri', 'new_name'],
 				properties: {
-					path: {
+					uri: {
 						type: 'string',
-						description: 'The full path to the file/directory'
+						description: 'The full uri to the file/directory'
 					},
 					new_name: {
 						type: 'string',
-						description: 'The new name (not path) for the file/directory'
+						description: 'The new name (not uri) for the file/directory'
 					}
 				}
 			}
@@ -106,15 +106,15 @@ export const tools = [
 			description: 'Move a file/directory in the project.',
 			parameters: {
 				type: 'object',
-				required: ['path', 'new_path'],
+				required: ['uri', 'new_uri'],
 				properties: {
-					path: {
+					uri: {
 						type: 'string',
-						description: 'The full path to the file/directory'
+						description: 'The full uri to the file/directory'
 					},
-					new_path: {
+					new_uri: {
 						type: 'string',
-						description: 'The new full path for the file/directory'
+						description: 'The new full uri for the file/directory'
 					}
 				}
 			}
@@ -127,11 +127,11 @@ export const tools = [
 			description: 'Create a new file in the project.',
 			parameters: {
 				type: 'object',
-				required: ['path'],
+				required: ['uri'],
 				properties: {
-					path: {
+					uri: {
 						type: 'string',
-						description: 'The full path to the file'
+						description: 'The full uri to the file'
 					},
 					content: {
 						type: 'string',
@@ -149,12 +149,12 @@ export const tools = [
 			description: 'Create a new directory in the project.',
 			parameters: {
 				type: 'object',
-				required: ['path'],
+				required: ['uri'],
 				properties: {
-					path: {
+					uri: {
 						type: 'string',
 						description:
-							'The full path to the directory, parent folders must exist'
+							'The full uri to the directory, parent folders must exist'
 					}
 				}
 			}
@@ -167,11 +167,11 @@ export const tools = [
 			description: 'Delete a file/directory.',
 			parameters: {
 				type: 'object',
-				required: ['path'],
+				required: ['uri'],
 				properties: {
-					path: {
+					uri: {
 						type: 'string',
-						description: 'The full path to the file or directory'
+						description: 'The full uri to the file or directory'
 					}
 				}
 			}
@@ -181,21 +181,28 @@ export const tools = [
 		type: 'function',
 		function: {
 			name: 'edited_files_history',
-			description: 'Here you can access and retrieve every bit of edits made (using the edit_file tool) in every files.',
+			description:
+				'Here you can access and retrieve every bit of edits made (using the edit_file tool) in every files.',
 			parameters: {
 				type: 'object',
 				properties: {
 					filterByIds: {
 						type: 'array',
-						description: "Get theses exact ID history, exactly the array length you passed that will be returned with the exact edit history id, and each ID may be from different files."
+						items: {
+							type: 'string'
+						},
+						description:
+							'Get theses exact ID history, exactly the array length you passed that will be returned with the exact edit history id, and each ID may be from different files.'
 					},
 					filterByFile: {
 						type: 'string',
-						description: "It takes full path. It will retrieve all edited histories of the file. when using 'filterByFile' you should set the 'limit' property."
+						description:
+							"It takes full uri. It will retrieve all edited histories of the file. when using 'filterByFile' you should set the 'limit' property."
 					},
 					limit: {
 						type: 'number',
-						description: 'Limit the length of edits to get on a particular file.'
+						description:
+							'Limit the length of edits to get on a particular file.'
 					}
 				}
 			}

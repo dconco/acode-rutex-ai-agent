@@ -2,11 +2,11 @@ import { ListDirInfo, ToolsReturnType } from './types'
 import { getRelativePath } from './utils'
 
 export default async function* ({
-	path
+	uri
 }: ListDirInfo): AsyncGenerator<ToolsReturnType> {
 
 	// --- SEND SIGNAL TO PANEL THAT DIRECTORY IS LISTING ---
-	const relativePath = getRelativePath(path)
+	const relativePath = getRelativePath(uri)
 
 	const toolCalling = JSON.stringify({
 		header: `VIEWED: ${relativePath}`
@@ -16,7 +16,7 @@ export default async function* ({
 
 	// --- START FILE READ ---
 	const fs = acode.require('fs')
-	const entries = await fs(path)?.lsDir()
+	const entries = await fs(uri)?.lsDir()
 
 	if (!entries) {
 		throw new Error('Directory path is invalid or inaccessible.')
@@ -24,13 +24,13 @@ export default async function* ({
 
 	const result = entries
 		.map((entry: Acode.File) => {
-			if (entry.url.startsWith(path)) {
-				return entry.url.slice(path.length)
+			if (entry.url.startsWith(uri)) {
+				return entry.url.slice(uri.length)
 			}
 
 			return entry.url
 		})
-		.join(' | ')
+		.join(' | ')  || '[EMPTY DIRECTORY]'
 
 	yield { result, toSave }
 }

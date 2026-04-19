@@ -500,11 +500,14 @@ const renderPanel = (container: HTMLElement): (() => void) => {
 
 							if (dd.editedFileHistoryId) {
 								message.editedFileHistoryIds ??= []
-								message.editedFileHistoryIds.push(dd.editedFileHistoryId)
+								message.editedFileHistoryIds.push(
+									dd.editedFileHistoryId
+								)
 							}
 
 							liveContent.querySelector('.stream-cursor')?.remove()
-							liveContent.innerHTML += dd.html + '<span class="stream-cursor"></span>'
+							liveContent.innerHTML +=
+								dd.html + '<span class="stream-cursor"></span>'
 						} else
 							liveContent.innerHTML =
 								(await renderMarkdown(message.text)) +

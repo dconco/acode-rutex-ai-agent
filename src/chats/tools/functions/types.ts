@@ -1,11 +1,11 @@
 export interface ReadFileInfo {
-	path: string
+	uri: string
 	start_line: number
 	end_line: number
 }
 
 export interface ListDirInfo {
-	path: string
+	uri: string
 }
 
 export interface EditFileLines {
@@ -21,50 +21,52 @@ export interface OldEditedFileLines {
 }
 
 export interface EditFileInfo {
-	path: string
+	uri: string
 	lines: EditFileLines[]
 }
 
 export interface RenameFileInfo {
-	path: string
+	uri: string
 	new_name: string
 }
 
 export interface MoveFileInfo {
-	path: string
-	new_path: string
+	uri: string
+	new_uri: string
 }
 
 export interface CreateFileInfo {
-   path: string
-   content: string
+	uri: string
+	content: string
 }
 
 export interface CreateDirInfo {
-   path: string
+	uri: string
 }
 
 export interface EditedFilesHistoryProps {
-   filterByIds?: string[]
+	filterByIds?: string[]
 	filterByFile?: string
 	limit?: number
 }
 
 export type ToolsReturnType = {
-   toSave?: string
+	toSave?: string
 	result?: string
 }
 
 export type ToolsFunction = (
-	args: ReadFileInfo
-				| ListDirInfo
-				| RenameFileInfo
-				| MoveFileInfo
-				| EditFileInfo
-				| CreateFileInfo
-				| CreateDirInfo
-				| EditedFilesHistoryProps
+	args:
+		| ReadFileInfo
+		| ListDirInfo
+		| RenameFileInfo
+		| MoveFileInfo
+		| EditFileInfo
+		| CreateFileInfo
+		| CreateDirInfo
+		| EditedFilesHistoryProps
 ) => AsyncGenerator<ToolsReturnType>
 
-
-export type DisplayToolsCallUsed = { header: string } | { path: string; editedFileHistoryId: string; }
+export type DisplayToolsCallUsed =
+	| { header: string }
+	| { path: string; editedFileHistoryId: string }

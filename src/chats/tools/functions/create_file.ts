@@ -1,9 +1,9 @@
 import { CreateFileInfo } from './types'
 import { getRelativePath } from './utils'
 
-export default async function* ({ path, content = '' }: CreateFileInfo) {
+export default async function* ({ uri, content = '' }: CreateFileInfo) {
 	// --- SEND SIGNAL TO PANEL THAT FILE IS BEING READ ---
-	const relativePath = getRelativePath(path)
+	const relativePath = getRelativePath(uri)
 
 	const toolCalling = JSON.stringify({
 		header: `FILE CREATED: ${relativePath}`
@@ -13,14 +13,14 @@ export default async function* ({ path, content = '' }: CreateFileInfo) {
 	// --- START FILE READ ---
 	const fs = acode.require('fs')
 
-	const exists = await fs(path)?.exists()
+	const exists = await fs(uri)?.exists()
 
 	if (exists) {
 		throw new Error('Specified path already exists.')
 	}
 
-	const dirPath = path.substring(0, path.lastIndexOf('/'))
-	const filename = path.substring(path.lastIndexOf('/') + 1)
+	const dirPath = uri.substring(0, uri.lastIndexOf('/'))
+	const filename = uri.substring(uri.lastIndexOf('/') + 1)
 
 	const dirExists = await fs(dirPath)?.exists()
 
@@ -28,7 +28,7 @@ export default async function* ({ path, content = '' }: CreateFileInfo) {
 
 	const result = await fs(dirPath).createFile(filename, content)
 
-	acode.newEditorFile(filename, { render: true, uri: path })
+	acode.newEditorFile(filename, { render: true, uri })
 
 	yield { result, toSave }
 }

@@ -16,11 +16,11 @@ import { getRelativePath } from './utils'
 export const currentEdittedFiles: CurrentEditedFiles = {}
 
 export default async function* ({
-	path,
+	uri,
 	lines
 }: EditFileInfo): AsyncGenerator<ToolsReturnType> {
 	const fs = acode.require('fs')
-	const fsPath = fs(path)
+	const fsPath = fs(uri)
 
 	const exists = await fsPath?.exists()
 
@@ -28,13 +28,13 @@ export default async function* ({
 		throw new Error('File does not exist.')
 	}
 
-	let openFile = editorManager.files.find(f => f.uri === path)
+	let openFile = editorManager.files.find(f => f.uri === uri)
 
 	if (openFile && openFile.readOnly) throw new Error('File is readonly')
 
 	if (!openFile) {
-		const filename = path.substring(path.lastIndexOf('/') + 1)
-		openFile = acode.newEditorFile(filename, { uri: path, render: true })
+		const filename = uri.substring(uri.lastIndexOf('/') + 1)
+		openFile = acode.newEditorFile(filename, { uri, render: true })
 	} else openFile.makeActive()
 
 	try {
@@ -52,7 +52,7 @@ export default async function* ({
 		let totalAdded = 0
 		let totalRemoved = 0
 
-		const rPath = getRelativePath(path, false)
+		const rPath = getRelativePath(uri, false)
 		currentEdittedFiles[rPath] ??= {
 			totalAdded: 0,
 			totalRemoved: 0,
@@ -141,8 +141,8 @@ export default async function* ({
 		}
 
 		// --- SEND SIGNAL TO PANEL THAT FILE IS BEING READ ---
-		const relativePath = getRelativePath(path)
-		const id = await saveEditedFileHistory(newLines, path, getCurrentChatID())
+		const relativePath = getRelativePath(uri)
+		const id = await saveEditedFileHistory(newLines, uri, getCurrentChatID())
 
 		currentEdittedFiles[rPath].editedHistoryIds.push(id)
 
