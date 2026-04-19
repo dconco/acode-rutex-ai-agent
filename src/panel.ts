@@ -499,15 +499,11 @@ const renderPanel = (container: HTMLElement): (() => void) => {
 							const dd = await processSingleToolCallTag(chunk.delta)
 
 							if (dd.editedFileHistoryId) {
-								message.editedFileHistoryIds = [
-									...(message.editedFileHistoryIds || []),
-									dd.editedFileHistoryId
-								]
+								message.editedFileHistoryIds = [...(message.editedFileHistoryIds || []), dd.editedFileHistoryId]
 							}
 
 							liveContent.querySelector('.stream-cursor')?.remove()
-							liveContent.innerHTML +=
-								dd.html + '<span class="stream-cursor"></span>'
+							liveContent.innerHTML += dd.html + '<span class="stream-cursor"></span>'
 						} else
 							liveContent.innerHTML =
 								(await renderMarkdown(message.text)) +
