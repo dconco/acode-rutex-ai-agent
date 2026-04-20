@@ -18,7 +18,7 @@ export function openEditedFilesDialog() {
 
 	for (const filePath in currentEdittedFiles) {
 		const rPath = getRelativePath(filePath, false)
-		const encodedPath = Buffer.from(filePath).toString('base64')
+		const encodedPath = btoa(unescape(encodeURIComponent(filePath)))
 
 		const fileInfo = currentEdittedFiles[filePath]
 		const fileOption = filesList.querySelector(
