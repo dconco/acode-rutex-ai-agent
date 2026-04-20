@@ -13,8 +13,8 @@ Rutex is a high-performance, autonomous AI agent plugin built specifically for t
 
 ### 📸 Screenshots
 
-![Rutex Interface 1](https://raw.githubusercontent.com/dconco/acode-ai-agent-plugin/main/screenshots/1.png)
-![Rutex Interface 2](https://raw.githubusercontent.com/dconco/acode-ai-agent-plugin/main/screenshots/2.png)
+![Rutex Interface 1](https://raw.githubusercontent.com/hallofcodes/acode-ai-agent-plugin/main/screenshots/1.png)
+![Rutex Interface 2](https://raw.githubusercontent.com/hallofcodes/acode-ai-agent-plugin/main/screenshots/2.png)
 
 ### 🔌 Supported Providers
 
