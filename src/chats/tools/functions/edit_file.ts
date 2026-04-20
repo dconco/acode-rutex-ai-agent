@@ -52,8 +52,7 @@ export default async function* ({
 		let totalAdded = 0
 		let totalRemoved = 0
 
-		const rPath = getRelativePath(uri, false)
-		currentEdittedFiles[rPath] ??= {
+		currentEdittedFiles[uri] ??= {
 			type: 'edited',
 			totalAdded: 0,
 			totalRemoved: 0,
@@ -78,7 +77,7 @@ export default async function* ({
 
 				// delete, so only one line object shows which is removed line
 				totalRemoved++
-				currentEdittedFiles[rPath].totalRemoved++
+				currentEdittedFiles[uri].totalRemoved++
 			}
 
 			if (text === '') {
@@ -104,7 +103,7 @@ export default async function* ({
 					newLines.push(buildNewContentLines)
 
 					totalAdded++
-					currentEdittedFiles[rPath].totalAdded++
+					currentEdittedFiles[uri].totalAdded++
 				}
 			} else {
 				// Standard single line update or insertion
@@ -117,7 +116,7 @@ export default async function* ({
 				})
 
 				totalAdded++
-				currentEdittedFiles[rPath].totalAdded++
+				currentEdittedFiles[uri].totalAdded++
 			}
 		}
 
@@ -148,7 +147,7 @@ export default async function* ({
 		const relativePath = getRelativePath(uri)
 		const id = await saveEditedFileHistory(newLines, uri, getCurrentChatID())
 
-		currentEdittedFiles[rPath].editedHistoryIds.push(id)
+		currentEdittedFiles[uri].editedHistoryIds.push(id)
 
 		openEditedFilesDialog()
 

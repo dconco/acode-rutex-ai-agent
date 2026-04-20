@@ -1,6 +1,7 @@
 import { retrieveEditedFileHistory } from '../chats/history/chatHistory'
 import { currentEdittedFiles } from '../chats/tools/functions/edit_file'
 import { OldEditedFileLines } from '../chats/tools/functions/types'
+import { getRelativePath } from '../chats/tools/functions/utils'
 import { doc, escapeHtml } from './utils'
 
 export function openEditedFilesDialog() {
@@ -16,9 +17,12 @@ export function openEditedFilesDialog() {
 	}
 
 	for (const filePath in currentEdittedFiles) {
+		const rPath = getRelativePath(filePath, false)
+		const encodedPath = Buffer.from(filePath).toString('base64')
+
 		const fileInfo = currentEdittedFiles[filePath]
 		const fileOption = filesList.querySelector(
-			'.edited-file-option[data-file-path]'
+			`.edited-file-option[data-file-path="${encodedPath}"]`
 		)
 
 		if (fileOption) {
@@ -32,10 +36,10 @@ export function openEditedFilesDialog() {
 		}
 
 		const item = doc.document.createElement('div')
-		item.setAttribute('data-file-path', filePath)
+		item.setAttribute('data-file-path', encodedPath)
 		item.className = 'edited-file-option'
 		item.innerHTML = `
-         <span class="edited-file-name">${escapeHtml(filePath)}</span>
+         <span class="edited-file-name">${escapeHtml(rPath)}</span>
          <span class="edited-file-added">+${fileInfo.totalAdded}</span>
          <span class="edited-file-removed">-${fileInfo.totalRemoved}</span>
          <button
