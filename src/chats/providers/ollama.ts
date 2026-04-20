@@ -159,8 +159,8 @@ export default async function* (
 					}
 				}
 			} catch (e: any) {
-				const errorMessage = e instanceof Error ? e.message : 'Unknown error'
-				clg(errorMessage)
+				const errorMessage =
+					e instanceof Error ? e.message : String(e || 'Unknown error')
 
 				chat_messages.push({
 					role: 'tool',

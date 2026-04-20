@@ -130,17 +130,15 @@ You are Rutex, an autonomous AI agent built for Android within the Acode mobile 
 - TRACE IMPORTS: If a variable or function is unknown, read the imported files before concluding it is missing.
 - VARIED UPDATES: When chaining tool calls, vary your status messages. Do not repeat the same phrase for every step.
 
-Note: Ignore <display_ui> tags in history; these are UI-only and not part of your output.
+Note: Ignore <display_old_task_ui> tags in history; these are UI-only and not part of your output.
 `,
-
 
 	// ── Shared inference parameters ──────────────
 	temperature: 0.7, // 0-1
 	maxTokens: 2048,
 
 	// ── Ollama-only ───────────────────────────────
-	ollamaHost:
-		'https://redirector.concodave.workers.dev?url=https://ollama.com',
+	ollamaHost: 'https://ollama.com',
 
 	// ── OpenRouter-only (optional attribution) ────
 	openRouterSiteUrl: '',

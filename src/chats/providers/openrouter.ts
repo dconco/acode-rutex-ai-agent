@@ -22,17 +22,16 @@ export default async function* (
 
 	// Mirror the provider pattern used elsewhere: plain incoming history,
 	// then provider-local tool loop with function_call_output continuations.
-	const chat_messages: any[] = messages
-		.map(m => ({
-			role: m.role,
-			content: m.content
-		}))
+	const chat_messages: any[] = messages.map(m => ({
+		role: m.role,
+		content: m.content
+	}))
 
 	const responseTools = ollamaTools.map(tool => ({
 		type: 'function' as const,
 		name: tool.function.name,
 		description: tool.function.description,
-		parameters: tool.function.parameters,
+		parameters: tool.function.parameters
 	}))
 
 	let fullText = ''
@@ -57,7 +56,7 @@ export default async function* (
 					input: chat_messages,
 					instructions: aiSettings.systemInstruction,
 					stream: true
-				},
+				}
 			},
 			{ signal }
 		)
@@ -67,7 +66,6 @@ export default async function* (
 
 			switch (chunk.type) {
 				case 'response.output_text.delta':
-
 					fullText += chunk.delta
 					yield { type: 'text', delta: chunk.delta, model: resolvedModel }
 					break
@@ -82,7 +80,6 @@ export default async function* (
 					break
 
 				case 'response.function_call_arguments.done':
-
 					if (pendingToolCalls[chunk.itemId] ?? null) {
 						pendingToolCalls[chunk.itemId].arguments = chunk.arguments
 					}
@@ -90,16 +87,15 @@ export default async function* (
 
 				case 'response.completed':
 					// chunk.response.usage has token counts
-					usage.inputTokens += chunk.response.usage?.inputTokens ?? 0,
-					usage.outputTokens += chunk.response.usage?.outputTokens ?? 0,
-					usage.totalTokens += chunk.response.usage?.totalTokens ?? 0,
-
-					// chunk.response.model has the resolved model name
-					resolvedModel = chunk.response.model || model
+					;(usage.inputTokens += chunk.response.usage?.inputTokens ?? 0),
+						(usage.outputTokens +=
+							chunk.response.usage?.outputTokens ?? 0),
+						(usage.totalTokens += chunk.response.usage?.totalTokens ?? 0),
+						// chunk.response.model has the resolved model name
+						(resolvedModel = chunk.response.model || model)
 					break
 			}
 		}
-
 
 		// No tool calls → we're done
 		if (Object.entries(pendingToolCalls).length === 0) break
@@ -132,15 +128,15 @@ export default async function* (
 							type: 'function_call_output',
 							id: tc.callId,
 							callId: tc.callId,
-							output: toolChunk.result,
+							output: toolChunk.result
 						})
 
 						break
 					}
 				}
 			} catch (e: any) {
-				const errorMessage = e instanceof Error ? e.message : 'Unknown error'
-				clg(errorMessage)
+				const errorMessage =
+					e instanceof Error ? e.message : String(e || 'Unknown error')
 
 				chat_messages.push({
 					type: 'function_call_output',
@@ -150,9 +146,7 @@ export default async function* (
 				})
 			}
 		}
-
 	}
-
 
 	yield {
 		type: 'done',
@@ -162,7 +156,6 @@ export default async function* (
 		usage
 	}
 }
-
 
 function safeJson(text: string) {
 	try {

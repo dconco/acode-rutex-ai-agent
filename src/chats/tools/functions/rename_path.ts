@@ -8,7 +8,7 @@ export default async function* ({ uri, new_name }: RenameFileInfo) {
 	const toolCalling = JSON.stringify({
 		header: `RENAMED: ${relativePath} -> ${new_name}`
 	})
-	const toSave = `<display_ui>${toolCalling}</display_ui>`
+	const toSave = `<display_old_task_ui>${toolCalling}</display_old_task_ui>`
 
 	// --- START FILE READ ---
 	const fs = acode.require('fs')

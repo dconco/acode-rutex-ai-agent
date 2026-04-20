@@ -184,8 +184,7 @@ export default async function* (
 				})
 			} catch (e: any) {
 				const errorMessage =
-					e instanceof Error ? e.message : 'Unknown error'
-				clg(errorMessage)
+					e instanceof Error ? e.message : String(e || 'Unknown error')
 
 				functionResponses.push({
 					id: call.id,

@@ -13,7 +13,7 @@ export default async function* ({
 	const toolCalling = JSON.stringify({
 		header: `VIEWED FILES EDIT HISTORY`
 	})
-	const toSave = `<display_ui>${toolCalling}</display_ui>`
+	const toSave = `<display_old_task_ui>${toolCalling}</display_old_task_ui>`
 
 	// --- START FILE EDIT HISTORY ---
 

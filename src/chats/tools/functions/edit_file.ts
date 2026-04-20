@@ -66,7 +66,7 @@ export default async function* ({
 			const targetLine = line - 1
 
 			// --- Mark as removed only if the line content has changed ---
-			if (contentLines[targetLine].trimEnd() !== text.trimEnd()) {
+			if (contentLines[targetLine]?.trimEnd() !== text?.trimEnd()) {
 				const buildOldContentLines = {
 					line,
 					text: contentLines[targetLine],
@@ -158,7 +158,7 @@ export default async function* ({
 			totalRemoved,
 		} as DisplayToolsCallUsed)
 
-		const toSave = `<display_ui>${toolCalling}</display_ui>`
+		const toSave = `<display_old_task_ui>${toolCalling}</display_old_task_ui>`
 
 		yield {
 			result: `[EDITED] +${totalAdded} -${totalRemoved}`,

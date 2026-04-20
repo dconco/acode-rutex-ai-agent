@@ -61,7 +61,9 @@ export default async function* (
 				inputTokens:
 					response.usage.input_tokens ?? response.usage.prompt_tokens ?? 0,
 				outputTokens:
-					response.usage.output_tokens ?? response.usage.completion_tokens ?? 0,
+					response.usage.output_tokens ??
+					response.usage.completion_tokens ??
+					0,
 				totalTokens: response.usage.total_tokens ?? 0
 			}
 		}
@@ -120,8 +122,8 @@ export default async function* (
 					output: resultContent || '[NO RESULT]'
 				})
 			} catch (e: any) {
-				const errorMessage = e instanceof Error ? e.message : 'Unknown error'
-				clg(errorMessage)
+				const errorMessage =
+					e instanceof Error ? e.message : String(e || 'Unknown error')
 
 				input.push({
 					type: 'function_call_output',

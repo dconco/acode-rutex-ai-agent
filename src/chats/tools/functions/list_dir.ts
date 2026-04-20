@@ -12,7 +12,7 @@ export default async function* ({
 		header: `VIEWED: ${relativePath}`
 	})
 
-	const toSave = `<display_ui>${toolCalling}</display_ui>`
+	const toSave = `<display_old_task_ui>${toolCalling}</display_old_task_ui>`
 
 	// --- START FILE READ ---
 	const fs = acode.require('fs')

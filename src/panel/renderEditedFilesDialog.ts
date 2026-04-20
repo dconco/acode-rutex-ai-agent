@@ -130,5 +130,6 @@ function revertEditedLines(history: OldEditedFileLines[], file: string) {
 	// --- Reverse the array so we can start reverting the file edits right from the very last ---
 	// --- Filter and remove edits we can't revert ---
 	const reversedHistory = history.reverse().filter(entry => entry.revertable)
+	clg('REVERT NOT YET IMPLEMENTED: CHECK THE HISTORY')
    clg('Revert history', reversedHistory)
 }

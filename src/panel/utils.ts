@@ -46,7 +46,7 @@ export function copyText(
 	doc: Document = document
 ): void {
 	const textToCopy = text.replace(
-		/<display_ui>[\s\S]*?<\/display_ui>/gi,
+		/<display_old_task_ui>[\s\S]*?<\/display_old_task_ui>/gi,
 		'\n'
 	)
 
