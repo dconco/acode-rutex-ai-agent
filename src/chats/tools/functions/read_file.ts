@@ -6,11 +6,14 @@ export default async function* ({
 	start_line,
 	end_line
 }: ReadFileInfo): AsyncGenerator<ToolsReturnType> {
+	const startLine = Math.max(1, start_line)
+	const endLine = Math.max(2, end_line)
+
 	// --- SEND SIGNAL TO PANEL THAT FILE IS BEING READ ---
 	const relativePath = getRelativePath(uri)
 
 	const toolCalling = JSON.stringify({
-		header: `READ: ${relativePath}:${start_line}-${end_line}`
+		header: `READ: ${relativePath}:${startLine}-${endLine}`
 	})
 	const toSave = `<display_old_task_ui>${toolCalling}</display_old_task_ui>`
 
@@ -28,8 +31,8 @@ export default async function* ({
 	const lines = content.split('\n')
 
 	const result = lines
-		.slice(start_line - 1, end_line)
-		.map((line, index) => `${start_line + index}: ${line}`)
+		.slice(startLine - 1, endLine)
+		.map((line, index) => `${startLine + index}: ${line}`)
 		.join('\n')
 
 	yield { result, toSave }

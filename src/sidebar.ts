@@ -8,6 +8,9 @@ let scrollBottom: undefined | (() => void) = undefined
 const addIcon = () => {
 	acode.addIcon('ai-agent-icon', Icon)
 
+	// Remove first in case plugin is reloading/updating
+	sideBarApps.remove(PLUGIN_ID)
+
 	sideBarApps.add(
 		'ai-agent-icon',
 		PLUGIN_ID,
