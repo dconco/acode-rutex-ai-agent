@@ -40,7 +40,7 @@ const escapeHtml2 = (value: string): string => {
 		'"': '&quot;',
 		"'": '&#39;'
 	}
-	return value.replace(/[&<>"']/g, char => map[char])
+	return String(value || '').replace(/[&<>"']/g, char => map[char])
 }
 
 const normalizeLanguage = (lang: string): string => {
@@ -171,7 +171,7 @@ export const renderMarkdown = async (raw: string): Promise<string> => {
 		}
 
 		const language = normalizeLanguage(match[1] || 'code')
-		const code = match[2].replace(/\n$/, '').trimEnd()
+		const code = String(match[2] || '').replace(/\n$/, '').trimEnd()
 		const encoded = btoa(unescape(encodeURIComponent(code)))
 
 		let highlighted = code

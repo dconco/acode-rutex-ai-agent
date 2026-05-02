@@ -107,25 +107,6 @@ export function closeEditedFilesDialog() {
 	filesList.innerHTML = ''
 }
 
-export function initializeEditedFilesDialogEvents(doc: Document) {
-	const acceptAllBtn = doc.getElementById('accept-all-btn')
-	const rejectAllBtn = doc.getElementById('reject-all-btn')
-
-	acceptAllBtn?.addEventListener('click', () => {
-		const allAcceptBtns = doc.querySelectorAll(
-			'.edited-file-option .edited-file-action.accept'
-		) as NodeListOf<HTMLButtonElement>
-		allAcceptBtns.forEach((btn: HTMLButtonElement) => btn.click())
-	})
-
-	rejectAllBtn?.addEventListener('click', () => {
-		const allRejectBtns = doc.querySelectorAll(
-			'.edited-file-option .edited-file-action.reject'
-		) as NodeListOf<HTMLButtonElement>
-		allRejectBtns.forEach((btn: HTMLButtonElement) => btn.click())
-	})
-}
-
 function revertEditedLines(history: OldEditedFileLines[], file: string) {
 	// --- Reverse the array so we can start reverting the file edits right from the very last ---
 	// --- Filter and remove edits we can't revert ---

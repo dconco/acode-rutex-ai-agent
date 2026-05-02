@@ -76,7 +76,7 @@ export const aiSettings: AISettings = {
 		deepseek: 'deepseek-chat', // deepseek-reasoner (thinking/CoT mode)
 		qwen: 'qwen3-coder-plus', // qwen3.5
 		ollama: 'qwen3.5', // any model pulled locally
-		openrouter: 'qwen/qwen3-coder:free' // <provider>/<model> — 300+ available
+		openrouter: 'qwen/qwen3-coder' // <provider>/<model> — 300+ available
 	},
 
 	// ── API keys ─────────────────────────────────

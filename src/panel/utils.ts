@@ -11,7 +11,9 @@ export const escapeHtml = (
 	let content = pre.innerHTML
 
 	if (includeNL)
-		content = content?.replace(/ /g, '&nbsp;').replace(/\n/g, '<br>')
+		content = String(content || '')
+			.replace(/ /g, '&nbsp;')
+			.replace(/\n/g, '<br>')
 	return content
 }
 
@@ -46,7 +48,7 @@ export function copyText(
 	doc: Document = document
 ): void {
 	const textToCopy = text.replace(
-		/<display_old_task_ui>[\s\S]*?<\/display_old_task_ui>/gi,
+		/<system_injected_preview>[\s\S]*?<\/system_injected_preview>/gi,
 		'\n'
 	)
 
@@ -82,7 +84,7 @@ export function copyText(
 }
 
 export const stripTrailingDetailsBlock = (text: string): string => {
-	const trimmedEnd = text.replace(/\s+$/g, '')
+	const trimmedEnd = String(text || '').replace(/\s+$/g, '')
 	const closeTag = '</details>'
 	const lower = trimmedEnd.toLowerCase()
 	const closeIndex = lower.lastIndexOf(closeTag)

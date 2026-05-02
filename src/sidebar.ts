@@ -5,11 +5,15 @@ import { PLUGIN_ID } from './configs/constants'
 const sideBarApps = acode.require('sidebarApps')
 let scrollBottom: undefined | (() => void) = undefined
 
+const removeIcon = () => {
+	sideBarApps.remove(PLUGIN_ID)
+}
+
 const addIcon = () => {
 	acode.addIcon('ai-agent-icon', Icon)
 
 	// Remove first in case plugin is reloading/updating
-	sideBarApps.remove(PLUGIN_ID)
+	removeIcon()
 
 	sideBarApps.add(
 		'ai-agent-icon',
@@ -24,10 +28,6 @@ const addIcon = () => {
 			if (scrollBottom) scrollBottom()
 		}
 	)
-}
-
-const removeIcon = () => {
-	sideBarApps.remove(PLUGIN_ID)
 }
 
 export { addIcon, removeIcon }
