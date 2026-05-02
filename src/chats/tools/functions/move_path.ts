@@ -9,7 +9,7 @@ export default async function* ({ uri, new_uri }: MoveFileInfo) {
 	const toolCalling = JSON.stringify({
 		header: `MOVED: ${relativePath} -> ${relativeNewPath}`
 	})
-	const toSave = `<display_old_task_ui>${toolCalling}</display_old_task_ui>`
+	const toSave = `<system_injected_preview>${toolCalling}</system_injected_preview>`
 
 	// --- START FILE READ ---
 	const fs = acode.require('fs')

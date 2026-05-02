@@ -23,7 +23,7 @@ export default async function* ({ uri, content = '' }: CreateFileInfo) {
 	const toolCalling = JSON.stringify({
 		header: result
 	})
-	const toSave = `<display_old_task_ui>${toolCalling}</display_old_task_ui>`
+	const toSave = `<system_injected_preview>${toolCalling}</system_injected_preview>`
 
 	await fs(uri).delete()
 

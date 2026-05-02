@@ -12,7 +12,8 @@ import { escapeHtml } from './utils'
 import { processSingleToolCallTag } from './commandParser'
 import { OldEditedFileLines } from '../chats/tools/functions/types'
 
-const TOOL_TAG_REGEX = /<display_old_task_ui>[\s\S]*?<\/display_old_task_ui>/gi
+const TOOL_TAG_REGEX =
+	/<system_injected_preview>[\s\S]*?<\/system_injected_preview>/gi
 
 hljs.registerLanguage('bash', bash as any)
 hljs.registerLanguage('sh', bash as any)
@@ -129,7 +130,9 @@ const renderMarkdownBlock = (block: string): string => {
 	return output.join('')
 }
 
-const renderMarkdownBlockWithToolCalls = async (block: string): Promise<string> => {
+const renderMarkdownBlockWithToolCalls = async (
+	block: string
+): Promise<string> => {
 	const matches = [...block.matchAll(TOOL_TAG_REGEX)]
 	if (!matches.length) return renderMarkdownBlock(block)
 
@@ -227,7 +230,11 @@ export const renderEditedFileLines = (
 	const uniqueLines = [...groups.keys()].sort((a, b) => a - b)
 
 	// Split unique line numbers into consecutive ranges (e.g. 1-4, 8-10).
-	const blocks: Array<{ startLine: number; endLine: number; lines: number[] }> = []
+	const blocks: Array<{
+		startLine: number
+		endLine: number
+		lines: number[]
+	}> = []
 	for (let i = 0; i < uniqueLines.length; ) {
 		const blockStartIndex = i
 		while (
@@ -261,7 +268,7 @@ export const renderEditedFileLines = (
 		} catch {
 			highlighted = escapeHtml2(code)
 		}
-		
+
 		return highlighted
 	}
 

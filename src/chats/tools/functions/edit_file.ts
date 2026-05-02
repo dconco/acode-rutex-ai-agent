@@ -133,14 +133,15 @@ export default async function* ({
 			// Get the character count of the last line
 			const lastColumn = session?.getLine(lastRow).length
 
-			// Replace everything from start to the actual end
-			session?.replace(
-				{
-					start: { row: 0, column: 0 },
-					end: { row: lastRow, column: lastColumn }
-				},
-				newContent
-			)
+			if (typeof session?.replace === 'function')
+				// Replace everything from start to the actual end
+				session?.replace(
+					{
+						start: { row: 0, column: 0 },
+						end: { row: lastRow, column: lastColumn }
+					},
+					newContent
+				)
 		}
 
 		// --- SEND SIGNAL TO PANEL THAT FILE IS BEING READ ---
@@ -158,7 +159,7 @@ export default async function* ({
 			totalRemoved
 		} as DisplayToolsCallUsed)
 
-		const toSave = `<display_old_task_ui>${toolCalling}</display_old_task_ui>`
+		const toSave = `<system_injected_preview>${toolCalling}</system_injected_preview>`
 
 		yield {
 			result: `[EDITED] +${totalAdded} -${totalRemoved}`,

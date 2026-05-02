@@ -435,11 +435,12 @@ const renderPanel = (container: HTMLElement): (() => void) => {
 				const isLastMessage = index === filteredChatMessages.length - 1
 				let ctx = ''
 
-				if (isLastMessage) {
+				/*if (isLastMessage) {
 					ctx += `──────── SUB-SYSTEM INSTRUCTION ────────\n
-Never use <display_old_task_ui> because it's inserted by the system alone for you (and the user) to be able to have references to your old tool calls, if the <display_old_task_ui> json info is for old edited files, then you can use the 'editedFileHistoryId' field value and add it as parameter to your 'view_edited_files_history' tool call to view the full code you added and removed for that file.\n
+Never use <system_injected_preview> because it's inserted by the system alone for you (and the user) to be able to have references to your old tool calls, if the <system_injected_preview> json info is for old edited files, then you can use the 'editedFileHistoryId' field value and add it as parameter to your 'view_edited_files_history' tool call to view the full code you added and removed for that file.
+After editing any files you should re-read them to make sure there's no error in your edit.\n
 `
-				}
+				}*/
 
 				ctx += `──────── USER CONTEXT ────────\n`
 				let hasContext = false

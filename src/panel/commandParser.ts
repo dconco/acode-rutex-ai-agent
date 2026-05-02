@@ -3,12 +3,12 @@ import { renderEditedFileLines } from './markdown'
 import { DisplayToolsCallUsed } from '../chats/tools/functions/types'
 import { retrieveEditedFileHistory } from '../chats/history/chatHistory'
 
-const TOOL_TAG_REGEX = /<display_old_task_ui>([\s\S]*?)<\/display_old_task_ui>/gi
+const TOOL_TAG_REGEX = /<system_injected_preview>([\s\S]*?)<\/system_injected_preview>/gi
 
 export async function processSingleToolCallTag(
 	tagText: string
 ): Promise<{ html: string; editedFileHistoryId?: string }> {
-	const match = /<display_old_task_ui>([\s\S]*?)<\/display_old_task_ui>/i.exec(tagText)
+	const match = /<system_injected_preview>([\s\S]*?)<\/system_injected_preview>/i.exec(tagText)
 	if (!match) return { html: tagText }
 
 	const payload = (match[1] || '').trim()

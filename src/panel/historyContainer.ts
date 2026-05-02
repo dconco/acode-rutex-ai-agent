@@ -28,7 +28,11 @@ export const historyContainer = (
 
 	const renderHistoryList = (): void => {
 		const historyList = getHistoryList()
-		const entries = Object.entries(historyList)
+		const entries = Object.entries(historyList).sort((a, b) => {
+			// Use b - a for numeric/date sorting (descending)
+			// Use b.localeCompare(a) for string-based dates (descending)
+			return b[0].localeCompare(a[0])
+		})
 		historyListEl.innerHTML = ''
 
 		if (!entries.length) {

@@ -10,7 +10,7 @@ export default async function* ({ uri, content = '' }: CreateFileInfo) {
 	const toolCalling = JSON.stringify({
 		header: `FILE CREATED: ${relativePath}`
 	})
-	const toSave = `<display_old_task_ui>${toolCalling}</display_old_task_ui>`
+	const toSave = `<system_injected_preview>${toolCalling}</system_injected_preview>`
 
 	// --- START FILE READ ---
 	const fs = acode.require('fs')
@@ -32,7 +32,7 @@ export default async function* ({ uri, content = '' }: CreateFileInfo) {
 
 	acode.newEditorFile(filename, { render: true, uri })
 
-	currentEdittedFiles[uri] ??= {
+	currentEdittedFiles[uri] = {
 		type: 'created',
 		totalAdded: content.split('\n').length,
 		totalRemoved: 0,
